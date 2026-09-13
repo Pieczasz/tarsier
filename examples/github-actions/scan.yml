@@ -1,0 +1,27 @@
+# Example GitHub Actions job
+#
+# Copy into .github/workflows/ in the repo you want to scan.
+# First run: generate tarsier-baseline.json locally and commit it, or omit
+# --fail-on until you have triaged the existing findings.
+
+name: tarsier
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - run: npm i -g @ast-grep/cli@0.45.1
+      - run: go install github.com/Pieczasz/tarsier/cmd/tarsier@v0.1.0
+      - run: tarsier scan --fail-on warning .

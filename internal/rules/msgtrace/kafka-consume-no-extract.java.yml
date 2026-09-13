@@ -1,0 +1,59 @@
+id: msgtrace-kafka-consume-no-extract-java
+language: java
+severity: warning
+
+metadata:
+  rule: msgtrace/kafka-consume-no-extract
+  requires: trace_propagation
+  expectation_layer: "1"
+  confidence: medium
+  spec_ref: semconv/messaging@1.44
+
+message: "Message consumed with no context extraction, so processing starts an orphan trace."
+note: |
+  Without extracting trace context from the message headers the consumer
+  cannot join the producer's trace and starts an orphan root span. The
+  checkout trace appears as two disconnected traces in your backend.
+
+  Fix: call record.headers() and extract with the OTel propagator, or rely
+  on the OTel Java agent / spring-kafka Observation.
+
+  Confidence is medium: the Java agent instruments consumers in bytecode,
+  so a handler with no .headers() call can still be correct. This finding
+  never gates a PR. Only void methods taking ConsumerRecord are considered
+  handlers - non-void adapters (thingsboard decode()) are a miss. Report
+  lands on the method-declaration line (the annotation line when one is
+  present). Any .headers() in the method body counts as handled, including
+  a business-only read. See README 13.2.
+
+rule:
+  kind: method_declaration
+  all:
+    - has:
+        kind: void_type
+    - has:
+        stopBy: end
+        kind: formal_parameter
+        has:
+          stopBy: end
+          kind: type_identifier
+          regex: '^ConsumerRecord$'
+    - not:
+        has:
+          stopBy: end
+          regex: '\.headers\('
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_declaration
+          regex: 'org\.apache\.kafka'
+    - not:
+        inside:
+          stopBy: end
+          kind: program
+          has:
+            stopBy: end
+            kind: import_declaration
+            regex: '(io\.opentelemetry\.instrumentation\.kafka|org\.springframework\.kafka\.support\.micrometer|brave\.kafka)'

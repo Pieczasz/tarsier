@@ -1,0 +1,68 @@
+id: msgtrace-kafka-produce-no-inject-java
+valid:
+  # Headers identifier in the constructor - thingsboard TbKafkaNode.java:151
+  # (business metadata, but any headers argument silences the rule).
+  - |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    import org.apache.kafka.common.header.Headers;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String key, String value, Headers headers) {
+        p.send(new ProducerRecord<>(topic, null, null, key, value, headers));
+      }
+    }
+  # RecordHeader in the constructor - source-visible inject.
+  - |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    import org.apache.kafka.common.header.internals.RecordHeader;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String key, String value) {
+        p.send(new ProducerRecord<>(topic, null, key, value, java.util.List.of(new RecordHeader("traceparent", new byte[]{}))));
+      }
+    }
+  # Build-then-send - thingsboard TbKafkaProducerTemplate.java:97.
+  - |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String key, String value) {
+        ProducerRecord<String, String> rec = new ProducerRecord<>(topic, key, value);
+        p.send(rec);
+      }
+    }
+  # No kafka import - import gate.
+  - |
+    class P {
+      void f(P p, String topic, String key, String value) {
+        p.send(new ProducerRecord<>(topic, key, value));
+      }
+    }
+  # Same-file OTel Kafka instrumentation: headerless send is correct (runtime inject).
+  - |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    import io.opentelemetry.instrumentation.kafkaclients.v2_6.TracingProducerInterceptor;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String key, String value) {
+        p.send(new ProducerRecord<>(topic, key, value));
+      }
+    }
+invalid:
+  # thingsboard TbKafkaNode.java:146 / _badshop shape.
+  - |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String key, String value) {
+        p.send(new ProducerRecord<>(topic, key, value));
+      }
+    }
+  - |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String value) {
+        p.send(new ProducerRecord<>(topic, value));
+      }
+    }

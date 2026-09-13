@@ -1,0 +1,100 @@
+id: metrics-unbounded-label-value-java
+snapshots:
+  ? |
+    class M { void f(MeterRegistry r) { Counter.builder("ids").tag("id", UUID.randomUUID().toString()).register(r); } }
+  : labels:
+    - source: UUID.randomUUID().toString()
+      style: primary
+      start: 69
+      end: 97
+    - source: tag
+      style: secondary
+      start: 59
+      end: 62
+    - source: Counter.builder("ids").tag("id", UUID.randomUUID().toString())
+      style: secondary
+      start: 36
+      end: 98
+    - source: ("id", UUID.randomUUID().toString())
+      style: secondary
+      start: 62
+      end: 98
+  ? |
+    class M { void f(MeterRegistry r, Exception e) { Counter.builder("failed").tag("error", e.getMessage()).register(r); } }
+  : labels:
+    - source: e.getMessage()
+      style: primary
+      start: 88
+      end: 102
+    - source: tag
+      style: secondary
+      start: 75
+      end: 78
+    - source: Counter.builder("failed").tag("error", e.getMessage())
+      style: secondary
+      start: 49
+      end: 103
+    - source: ("error", e.getMessage())
+      style: secondary
+      start: 78
+      end: 103
+  ? |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r) { Counter.builder("i").tag("id", UUID.randomUUID().toString()).register(r); } }
+  : labels:
+    - source: UUID.randomUUID().toString()
+      style: primary
+      start: 113
+      end: 141
+    - source: tag
+      style: secondary
+      start: 103
+      end: 106
+    - source: Counter.builder("i").tag("id", UUID.randomUUID().toString())
+      style: secondary
+      start: 82
+      end: 142
+    - source: ("id", UUID.randomUUID().toString())
+      style: secondary
+      start: 106
+      end: 142
+    - source: import io.micrometer.core.instrument.Counter;
+      style: secondary
+      start: 0
+      end: 45
+    - source: |
+        import io.micrometer.core.instrument.Counter;
+        class M { void f(MeterRegistry r) { Counter.builder("i").tag("id", UUID.randomUUID().toString()).register(r); } }
+      style: secondary
+      start: 0
+      end: 160
+  ? |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, Exception e) { Counter.builder("f").tag("error", e.getMessage()).register(r); } }
+  : labels:
+    - source: e.getMessage()
+      style: primary
+      start: 129
+      end: 143
+    - source: tag
+      style: secondary
+      start: 116
+      end: 119
+    - source: Counter.builder("f").tag("error", e.getMessage())
+      style: secondary
+      start: 95
+      end: 144
+    - source: ("error", e.getMessage())
+      style: secondary
+      start: 119
+      end: 144
+    - source: import io.micrometer.core.instrument.Counter;
+      style: secondary
+      start: 0
+      end: 45
+    - source: |
+        import io.micrometer.core.instrument.Counter;
+        class M { void f(MeterRegistry r, Exception e) { Counter.builder("f").tag("error", e.getMessage()).register(r); } }
+      style: secondary
+      start: 0
+      end: 162

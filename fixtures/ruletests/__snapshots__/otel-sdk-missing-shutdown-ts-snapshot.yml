@@ -1,0 +1,28 @@
+id: otel-sdk-missing-shutdown-ts
+snapshots:
+  ? |
+    import { NodeSDK } from '@opentelemetry/sdk-node';
+    export const sdk = new NodeSDK({});
+  : labels:
+    - source: new NodeSDK({})
+      style: primary
+      start: 70
+      end: 85
+    - source: NodeSDK
+      style: secondary
+      start: 74
+      end: 81
+    - source: '''@opentelemetry/sdk-node'''
+      style: secondary
+      start: 24
+      end: 49
+    - source: import { NodeSDK } from '@opentelemetry/sdk-node';
+      style: secondary
+      start: 0
+      end: 50
+    - source: |
+        import { NodeSDK } from '@opentelemetry/sdk-node';
+        export const sdk = new NodeSDK({});
+      style: secondary
+      start: 0
+      end: 87

@@ -1,0 +1,46 @@
+id: metrics-unbounded-label-value-go
+language: go
+severity: warning
+
+metadata:
+  rule: metrics/unbounded-label-value
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label value $VAL is unbounded."
+note: |
+  A label with an innocent name still mints a series per request when its
+  value is unbounded:
+
+    ordersFailed = promauto.NewCounterVec(opts, []string{"error"})
+    ordersFailed.WithLabelValues(err.Error()).Inc()
+
+  Bucket the value into something bounded before it reaches the label - an
+  error *class*, a route template, a status code - and put the full detail on a
+  span, where cardinality is free.
+
+rule:
+  any:
+    - all:
+        - pattern: $E.Error()
+        - pattern: $VAL
+    - all:
+        - pattern: $R.URL.Path
+        - pattern: $VAL
+    - all:
+        - kind: call_expression
+          has:
+            field: function
+            regex: '^(uuid\.New\(\)\.String|uuid\.NewString)$'
+        - pattern: $VAL
+
+  inside:
+    stopBy: end
+    kind: argument_list
+    inside:
+      kind: call_expression
+      has:
+        field: function
+        regex: 'WithLabelValues$'

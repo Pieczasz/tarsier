@@ -1,0 +1,56 @@
+id: logs-unstructured-logging-ts
+snapshots:
+  ? |
+    import pino from 'pino';
+    const logger = pino();
+    console.log('order failed', orderId);
+  : labels:
+    - source: console.log
+      style: primary
+      start: 48
+      end: 59
+    - source: console.log('order failed', orderId)
+      style: secondary
+      start: 48
+      end: 84
+    - source: '''pino'''
+      style: secondary
+      start: 17
+      end: 23
+    - source: import pino from 'pino';
+      style: secondary
+      start: 0
+      end: 24
+    - source: |
+        import pino from 'pino';
+        const logger = pino();
+        console.log('order failed', orderId);
+      style: secondary
+      start: 0
+      end: 86
+  ? |
+    import winston from 'winston';
+    console.error('order failed');
+  : labels:
+    - source: console.error
+      style: primary
+      start: 31
+      end: 44
+    - source: console.error('order failed')
+      style: secondary
+      start: 31
+      end: 60
+    - source: '''winston'''
+      style: secondary
+      start: 20
+      end: 29
+    - source: import winston from 'winston';
+      style: secondary
+      start: 0
+      end: 30
+    - source: |
+        import winston from 'winston';
+        console.error('order failed');
+      style: secondary
+      start: 0
+      end: 62

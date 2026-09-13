@@ -1,0 +1,80 @@
+# ast-grep requires globally unique rule ids, so the id is suffixed per language.
+id: metrics-high-cardinality-label-go
+language: go
+severity: warning
+
+metadata:
+  rule: metrics/high-cardinality-label
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label $LABEL is unbounded; each distinct value mints a new billable time series."
+note: |
+  Unbounded labels are the single largest driver of observability cost.
+  Drop the label, or replace it with a bounded dimension (status, route,
+  region). If you need per-user detail, put it on a span or an exemplar -
+  high cardinality is free on traces and ruinous on metrics.
+
+  The OTel branch matches attribute.String only under metric.WithAttributes
+  / instrument.Add (not span.SetAttributes). Gated on importing
+  go.opentelemetry.io/otel/attribute. Aliased imports are a deliberate miss
+  until the deep tier.
+
+rule:
+  any:
+    - kind: interpreted_string_literal
+      pattern: $LABEL
+      matches: is-unbounded-label
+      inside:
+        stopBy: end
+        kind: composite_literal
+        has:
+          field: type
+          kind: slice_type
+        inside:
+          stopBy: end
+          pattern: $CTOR($$$ARGS)
+
+    # multi-arg WithAttributes (ast-grep needs $A, $$$ to parse as a call)
+    - all:
+        - kind: interpreted_string_literal
+          pattern: $LABEL
+          matches: is-unbounded-label
+          inside:
+            stopBy: end
+            pattern: attribute.String($LABEL, $$$)
+            inside:
+              stopBy: end
+              pattern: $X.WithAttributes($A, $$$)
+        - inside:
+            stopBy: end
+            kind: source_file
+            has:
+              stopBy: end
+              kind: import_spec
+              regex: 'go\.opentelemetry\.io/otel/attribute'
+
+    # single-arg WithAttributes via the enclosing Add call
+    - all:
+        - kind: interpreted_string_literal
+          pattern: $LABEL
+          matches: is-unbounded-label
+          inside:
+            stopBy: end
+            pattern: attribute.String($LABEL, $$$)
+            inside:
+              stopBy: end
+              pattern: $C.Add($CTX, $N, $$$OPTS)
+        - inside:
+            stopBy: end
+            kind: source_file
+            has:
+              stopBy: end
+              kind: import_spec
+              regex: 'go\.opentelemetry\.io/otel/attribute'
+
+constraints:
+  CTOR:
+    regex: 'New(Counter|Gauge|Histogram|Summary)Vec$'

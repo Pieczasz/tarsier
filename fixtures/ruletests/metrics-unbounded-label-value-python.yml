@@ -1,0 +1,23 @@
+id: metrics-unbounded-label-value-python
+valid:
+  - |
+    reqs.labels("GET", "200").inc()
+  # Unknowable here; proving it needs type information.
+  - |
+    reqs.labels(status).inc()
+  # Conversion proves nothing about what is converted. prefect labels a counter
+  # with str(message.kind) where kind is an enum, so the value set is bounded.
+  - |
+    dead_letters.labels(kind=str(message.kind), reason=reason).inc()
+  - |
+    reqs.labels(f"{method}-{code}").inc()
+  # Same expression, not a metric label.
+  - |
+    span.set_attribute("error", str(exc))
+invalid:
+  - |
+    reqs.labels(request.path).inc()
+  - |
+    ids.labels(uuid.uuid4()).inc()
+  - |
+    failures.labels(traceback.format_exc()).inc()

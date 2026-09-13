@@ -1,0 +1,12 @@
+# Shared by the Go msgtrace rules (produce + consume): true only in a file
+# importing a Kafka client. Kept Go-specific on purpose - an import gate uses
+# Go node kinds, so unlike the pure-regex cross-language utils it needs one
+# file per language.
+id: kafka-client-imported
+language: go
+rule:
+  kind: source_file
+  has:
+    stopBy: end
+    kind: import_spec
+    regex: '(segmentio/kafka-go|confluent-kafka-go|IBM/sarama|Shopify/sarama|twmb/franz-go)'

@@ -1,0 +1,67 @@
+id: msgtrace-kafka-consume-no-extract-java
+valid:
+  # .headers() in the method body - the correct source-visible shape.
+  - |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      public void onOrder(ConsumerRecord<String, String> record) {
+        record.headers();
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+  # Non-void adapter - thingsboard TbKafkaConsumerTemplate.java:203 decode().
+  - |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      public String decode(ConsumerRecord<String, String> record) {
+        return record.value();
+      }
+    }
+  # Constructor wrapping ConsumerRecord - thingsboard KafkaTbQueueMsg.java:20.
+  - |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      public C(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+  # No kafka import - import gate.
+  - |
+    class C {
+      public void onOrder(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+  # Same-file OTel Kafka instrumentation.
+  - |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    import io.opentelemetry.instrumentation.kafkaclients.v2_6.TracingConsumerInterceptor;
+    class C {
+      public void onOrder(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+invalid:
+  # _badshop worker/Consumer.java:10
+  - |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      public void onOrder(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+  # @KafkaListener still a void handler; match is the method_declaration.
+  - |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      @org.springframework.kafka.annotation.KafkaListener(topics = "orders")
+      public void listen(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }

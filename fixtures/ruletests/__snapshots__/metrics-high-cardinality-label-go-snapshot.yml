@@ -1,0 +1,154 @@
+id: metrics-high-cardinality-label-go
+snapshots:
+  ? |
+    package p
+    import "go.opentelemetry.io/otel/attribute"
+    func f(userID string) { _ = attribute.String("user_id", userID) }
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 99
+      end: 108
+    - source: attribute.String("user_id", userID)
+      style: secondary
+      start: 82
+      end: 117
+    - source: '"go.opentelemetry.io/otel/attribute"'
+      style: secondary
+      start: 17
+      end: 53
+    - source: |
+        package p
+        import "go.opentelemetry.io/otel/attribute"
+        func f(userID string) { _ = attribute.String("user_id", userID) }
+      style: secondary
+      start: 0
+      end: 120
+  ? |
+    package p
+    import (
+      "context"
+      "go.opentelemetry.io/otel/attribute"
+      "go.opentelemetry.io/otel/metric"
+    )
+    func f(ctx context.Context, c metric.Int64Counter, userID string) {
+      c.Add(ctx, 1, metric.WithAttributes(attribute.String("user_id", userID)))
+    }
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 231
+      end: 240
+    - source: c.Add(ctx, 1, metric.WithAttributes(attribute.String("user_id", userID)))
+      style: secondary
+      start: 178
+      end: 251
+    - source: attribute.String("user_id", userID)
+      style: secondary
+      start: 214
+      end: 249
+    - source: '"go.opentelemetry.io/otel/attribute"'
+      style: secondary
+      start: 33
+      end: 69
+    - source: |
+        package p
+        import (
+          "context"
+          "go.opentelemetry.io/otel/attribute"
+          "go.opentelemetry.io/otel/metric"
+        )
+        func f(ctx context.Context, c metric.Int64Counter, userID string) {
+          c.Add(ctx, 1, metric.WithAttributes(attribute.String("user_id", userID)))
+        }
+      style: secondary
+      start: 0
+      end: 254
+  ? |
+    package p
+    import (
+      "context"
+      "go.opentelemetry.io/otel/attribute"
+      "go.opentelemetry.io/otel/metric"
+    )
+    func f(ctx context.Context, c metric.Int64Counter, userID, status string) {
+      c.Add(ctx, 1, metric.WithAttributes(
+        attribute.String("user_id", userID),
+        attribute.String("status", status),
+      ))
+    }
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 244
+      end: 253
+    - source: |-
+        metric.WithAttributes(
+            attribute.String("user_id", userID),
+            attribute.String("status", status),
+          )
+      style: secondary
+      start: 200
+      end: 307
+    - source: attribute.String("user_id", userID)
+      style: secondary
+      start: 227
+      end: 262
+    - source: '"go.opentelemetry.io/otel/attribute"'
+      style: secondary
+      start: 33
+      end: 69
+    - source: |
+        package p
+        import (
+          "context"
+          "go.opentelemetry.io/otel/attribute"
+          "go.opentelemetry.io/otel/metric"
+        )
+        func f(ctx context.Context, c metric.Int64Counter, userID, status string) {
+          c.Add(ctx, 1, metric.WithAttributes(
+            attribute.String("user_id", userID),
+            attribute.String("status", status),
+          ))
+        }
+      style: secondary
+      start: 0
+      end: 311
+  ? |
+    var bad = prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"user_id", "status"})
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 70
+      end: 79
+    - source: prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{"user_id", "status"})
+      style: secondary
+      start: 10
+      end: 91
+    - source: '[]string'
+      style: secondary
+      start: 61
+      end: 69
+    - source: '[]string{"user_id", "status"}'
+      style: secondary
+      start: 61
+      end: 90
+  ? |
+    var bad2 = promauto.NewHistogramVec(prometheus.HistogramOpts{}, []string{"email"})
+  : labels:
+    - source: '"email"'
+      style: primary
+      start: 73
+      end: 80
+    - source: promauto.NewHistogramVec(prometheus.HistogramOpts{}, []string{"email"})
+      style: secondary
+      start: 11
+      end: 82
+    - source: '[]string'
+      style: secondary
+      start: 64
+      end: 72
+    - source: '[]string{"email"}'
+      style: secondary
+      start: 64
+      end: 81

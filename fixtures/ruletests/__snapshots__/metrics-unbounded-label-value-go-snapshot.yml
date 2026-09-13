@@ -1,0 +1,63 @@
+id: metrics-unbounded-label-value-go
+snapshots:
+  ? |
+    func f() { errs.WithLabelValues(err.Error()).Inc() }
+  : labels:
+    - source: err.Error()
+      style: primary
+      start: 32
+      end: 43
+    - source: errs.WithLabelValues
+      style: secondary
+      start: 11
+      end: 31
+    - source: errs.WithLabelValues(err.Error())
+      style: secondary
+      start: 11
+      end: 44
+    - source: (err.Error())
+      style: secondary
+      start: 31
+      end: 44
+  ? |
+    func f() { ids.WithLabelValues(uuid.NewString()).Inc() }
+  : labels:
+    - source: uuid.NewString()
+      style: primary
+      start: 31
+      end: 47
+    - source: uuid.NewString
+      style: secondary
+      start: 31
+      end: 45
+    - source: ids.WithLabelValues
+      style: secondary
+      start: 11
+      end: 30
+    - source: ids.WithLabelValues(uuid.NewString())
+      style: secondary
+      start: 11
+      end: 48
+    - source: (uuid.NewString())
+      style: secondary
+      start: 30
+      end: 48
+  ? |
+    func f() { reqs.WithLabelValues(r.URL.Path).Inc() }
+  : labels:
+    - source: r.URL.Path
+      style: primary
+      start: 32
+      end: 42
+    - source: reqs.WithLabelValues
+      style: secondary
+      start: 11
+      end: 31
+    - source: reqs.WithLabelValues(r.URL.Path)
+      style: secondary
+      start: 11
+      end: 43
+    - source: (r.URL.Path)
+      style: secondary
+      start: 31
+      end: 43

@@ -1,0 +1,168 @@
+id: msgtrace-kafka-produce-no-inject-go
+snapshots:
+  ? |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func bad(ctx context.Context, w *kafka.Writer, orderID string) error {
+        return w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: []byte(orderID)})
+    }
+  : labels:
+    - source: 'kafka.Message{Topic: "orders", Value: []byte(orderID)}'
+      style: primary
+      start: 177
+      end: 231
+    - source: kafka.Message
+      style: secondary
+      start: 177
+      end: 190
+    - source: w.WriteMessages
+      style: secondary
+      start: 156
+      end: 171
+    - source: 'w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: []byte(orderID)})'
+      style: secondary
+      start: 156
+      end: 232
+    - source: '(ctx, kafka.Message{Topic: "orders", Value: []byte(orderID)})'
+      style: secondary
+      start: 171
+      end: 232
+    - source: |
+        package main
+        import (
+            "context"
+            "github.com/segmentio/kafka-go"
+        )
+        func bad(ctx context.Context, w *kafka.Writer, orderID string) error {
+            return w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: []byte(orderID)})
+        }
+      style: secondary
+      start: 0
+      end: 235
+  ? |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func bad4(ctx context.Context, w *kafka.Writer) error {
+        return w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: encode(envelope{Headers: nil})})
+    }
+  : labels:
+    - source: 'kafka.Message{Topic: "orders", Value: encode(envelope{Headers: nil})}'
+      style: primary
+      start: 162
+      end: 231
+    - source: kafka.Message
+      style: secondary
+      start: 162
+      end: 175
+    - source: w.WriteMessages
+      style: secondary
+      start: 141
+      end: 156
+    - source: 'w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: encode(envelope{Headers: nil})})'
+      style: secondary
+      start: 141
+      end: 232
+    - source: '(ctx, kafka.Message{Topic: "orders", Value: encode(envelope{Headers: nil})})'
+      style: secondary
+      start: 156
+      end: 232
+    - source: |
+        package main
+        import (
+            "context"
+            "github.com/segmentio/kafka-go"
+        )
+        func bad4(ctx context.Context, w *kafka.Writer) error {
+            return w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: encode(envelope{Headers: nil})})
+        }
+      style: secondary
+      start: 0
+      end: 235
+  ? |
+    package main
+    import (
+        "context"
+        "github.com/twmb/franz-go/pkg/kgo"
+    )
+    func bad3(ctx context.Context, cl *kgo.Client) {
+        cl.ProduceSync(ctx, &kgo.Record{Topic: "orders", Value: []byte("x")})
+    }
+  : labels:
+    - source: 'kgo.Record{Topic: "orders", Value: []byte("x")}'
+      style: primary
+      start: 151
+      end: 198
+    - source: kgo.Record
+      style: secondary
+      start: 151
+      end: 161
+    - source: cl.ProduceSync
+      style: secondary
+      start: 130
+      end: 144
+    - source: 'cl.ProduceSync(ctx, &kgo.Record{Topic: "orders", Value: []byte("x")})'
+      style: secondary
+      start: 130
+      end: 199
+    - source: '(ctx, &kgo.Record{Topic: "orders", Value: []byte("x")})'
+      style: secondary
+      start: 144
+      end: 199
+    - source: |
+        package main
+        import (
+            "context"
+            "github.com/twmb/franz-go/pkg/kgo"
+        )
+        func bad3(ctx context.Context, cl *kgo.Client) {
+            cl.ProduceSync(ctx, &kgo.Record{Topic: "orders", Value: []byte("x")})
+        }
+      style: secondary
+      start: 0
+      end: 202
+  ? |
+    package main
+    import (
+        "github.com/IBM/sarama"
+    )
+    func bad2(p sarama.SyncProducer) {
+        p.SendMessage(&sarama.ProducerMessage{Topic: "orders", Value: sarama.StringEncoder("x")})
+    }
+  : labels:
+    - source: 'sarama.ProducerMessage{Topic: "orders", Value: sarama.StringEncoder("x")}'
+      style: primary
+      start: 106
+      end: 179
+    - source: sarama.ProducerMessage
+      style: secondary
+      start: 106
+      end: 128
+    - source: p.SendMessage
+      style: secondary
+      start: 91
+      end: 104
+    - source: 'p.SendMessage(&sarama.ProducerMessage{Topic: "orders", Value: sarama.StringEncoder("x")})'
+      style: secondary
+      start: 91
+      end: 180
+    - source: '(&sarama.ProducerMessage{Topic: "orders", Value: sarama.StringEncoder("x")})'
+      style: secondary
+      start: 104
+      end: 180
+    - source: |
+        package main
+        import (
+            "github.com/IBM/sarama"
+        )
+        func bad2(p sarama.SyncProducer) {
+            p.SendMessage(&sarama.ProducerMessage{Topic: "orders", Value: sarama.StringEncoder("x")})
+        }
+      style: secondary
+      start: 0
+      end: 183

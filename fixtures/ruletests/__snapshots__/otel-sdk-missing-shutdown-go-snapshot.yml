@@ -1,0 +1,43 @@
+id: otel-sdk-missing-shutdown-go
+snapshots:
+  ? |
+    package main
+    import (
+      "context"
+      sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    )
+    func f(ctx context.Context) {
+      _ = sdktrace.NewTracerProvider()
+    }
+  : labels:
+    - source: sdktrace.NewTracerProvider()
+      style: primary
+      start: 120
+      end: 148
+    - source: sdktrace.NewTracerProvider
+      style: secondary
+      start: 120
+      end: 146
+    - source: |-
+        func f(ctx context.Context) {
+          _ = sdktrace.NewTracerProvider()
+        }
+      style: secondary
+      start: 84
+      end: 150
+    - source: sdktrace "go.opentelemetry.io/otel/sdk/trace"
+      style: secondary
+      start: 36
+      end: 81
+    - source: |
+        package main
+        import (
+          "context"
+          sdktrace "go.opentelemetry.io/otel/sdk/trace"
+        )
+        func f(ctx context.Context) {
+          _ = sdktrace.NewTracerProvider()
+        }
+      style: secondary
+      start: 0
+      end: 151

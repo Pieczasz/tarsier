@@ -1,0 +1,59 @@
+id: metrics-high-cardinality-label-ts
+snapshots:
+  ? |
+    const bad = new Counter({ name: 'orders_total', help: 'x', labelNames: ['user_id', 'status'] });
+  : labels:
+    - source: '''user_id'''
+      style: primary
+      start: 72
+      end: 81
+    - source: labelNames
+      style: secondary
+      start: 59
+      end: 69
+    - source: 'labelNames: [''user_id'', ''status'']'
+      style: secondary
+      start: 59
+      end: 92
+    - source: '[''user_id'', ''status'']'
+      style: secondary
+      start: 71
+      end: 92
+  ? |
+    import { metrics } from '@opentelemetry/api';
+    otelCounter.add(1, { user_id: id, status: 'ok' });
+  : labels:
+    - source: user_id
+      style: primary
+      start: 67
+      end: 74
+    - source: 'otelCounter.add(1, { user_id: id, status: ''ok'' })'
+      style: secondary
+      start: 46
+      end: 95
+    - source: '(1, { user_id: id, status: ''ok'' })'
+      style: secondary
+      start: 61
+      end: 95
+    - source: '{ user_id: id, status: ''ok'' }'
+      style: secondary
+      start: 65
+      end: 94
+    - source: 'user_id: id'
+      style: secondary
+      start: 67
+      end: 78
+    - source: '''@opentelemetry/api'''
+      style: secondary
+      start: 24
+      end: 44
+    - source: import { metrics } from '@opentelemetry/api';
+      style: secondary
+      start: 0
+      end: 45
+    - source: |
+        import { metrics } from '@opentelemetry/api';
+        otelCounter.add(1, { user_id: id, status: 'ok' });
+      style: secondary
+      start: 0
+      end: 97

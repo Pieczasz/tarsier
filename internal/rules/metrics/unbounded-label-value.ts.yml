@@ -1,0 +1,63 @@
+id: metrics-unbounded-label-value-ts
+language: typescript
+severity: warning
+
+metadata:
+  rule: metrics/unbounded-label-value
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label value $VAL is unbounded."
+note: |
+  A label with an innocent name still mints a series per request when its
+  value is unbounded:
+
+    const failures = new Counter({ name: 'orders_failed_total', labelNames: ['error'] });
+    failures.inc({ error: err.message });
+
+  Bucket the value into something bounded before it reaches the label - an
+  error class, a route template, a status code - and put the full detail on a
+  span, where cardinality is free.
+
+rule:
+  any:
+    - all:
+        - pattern: $E.message
+        - pattern: $VAL
+    - all:
+        - pattern: $R.path
+        - pattern: $VAL
+    - all:
+        - pattern: $R.originalUrl
+        - pattern: $VAL
+    - all:
+        - kind: call_expression
+          has:
+            field: function
+            regex: '(randomUUID|uuidv4|nanoid)$'
+        - pattern: $VAL
+
+  all:
+    - inside:
+        stopBy: end
+        kind: pair
+        inside:
+          stopBy: end
+          kind: arguments
+          inside:
+            kind: call_expression
+            has:
+              field: function
+              regex: '\.(inc|dec|observe|set|labels|startTimer)$'
+
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_statement
+          has:
+            field: source
+            regex: '(prom-client|@opentelemetry)'

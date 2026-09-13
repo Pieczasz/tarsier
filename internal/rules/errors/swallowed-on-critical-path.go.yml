@@ -1,0 +1,34 @@
+id: errors-swallowed-on-critical-path-go
+language: go
+severity: warning
+
+metadata:
+  rule: errors/swallowed-on-critical-path
+  requires: error_metric
+  expectation_layer: "1"
+  confidence: medium
+  spec_ref: semconv/exceptions
+
+message: "Error is assigned to _ and dropped, so the failure is invisible to traces and metrics."
+note: |
+  `_ = err` after err != nil discards the only evidence that a critical
+  step failed. No span status, no error metric, no log. The checkout
+  looks successful until a customer complains.
+
+  Fix: return the error, or record it on the span (span.RecordError /
+  SetStatus) and increment a bounded error counter.
+
+  Confidence is medium: this is the `_ = err` idiom, not a full errcheck
+  replacement. An empty if-err block, a log.Printf, or assigning to a
+  named ignore variable is a miss. "Critical path" is not proven without
+  a workflow YAML. See README 13.2.
+
+rule:
+  kind: if_statement
+  all:
+    - has:
+        stopBy: end
+        regex: 'err != nil'
+    - has:
+        stopBy: end
+        regex: '_ = err'

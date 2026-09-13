@@ -1,0 +1,53 @@
+id: msgtrace-kafka-produce-no-inject-ts
+valid:
+  # headers present - the correct source-visible shape.
+  - |
+    import { Kafka } from "kafkajs";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v", headers: { traceparent: "x" } }] });
+    }
+  # No kafkajs import - import gate.
+  - |
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+    }
+  # Random {key, value} not inside messages: of .send - the argument-position guard.
+  - |
+    import { Kafka } from "kafkajs";
+    const pair = { key: "k", value: "v" };
+  # Same-file instrumentation-kafkajs: headerless send is correct (runtime inject).
+  - |
+    import { Kafka } from "kafkajs";
+    import { KafkaJsInstrumentation } from "@opentelemetry/instrumentation-kafkajs";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+    }
+  # Same-file auto-instrumentations-node bundle.
+  - |
+    import { Kafka } from "kafkajs";
+    import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ value: "v" }] });
+    }
+  # sendBatch is a deliberate miss (no .send call).
+  - |
+    import { Kafka } from "kafkajs";
+    async function f(p: { sendBatch: Function }) {
+      await p.sendBatch({ topicMessages: [{ topic: "orders", messages: [{ value: "v" }] }] });
+    }
+invalid:
+  - |
+    import { Kafka } from "kafkajs";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+    }
+  - |
+    import { Kafka } from "kafkajs";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ value: "v" }] });
+    }
+  - |
+    import { KafkaJS } from "@confluentinc/kafka-javascript";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+    }

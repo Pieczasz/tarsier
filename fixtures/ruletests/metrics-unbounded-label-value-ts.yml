@@ -1,0 +1,30 @@
+id: metrics-unbounded-label-value-ts
+valid:
+  - |
+    reqs.inc({ method: 'GET', code: '200' });
+  # Unknowable here; proving it needs type information.
+  - |
+    reqs.inc({ code: status });
+  # Same expression, not a metric label.
+  - |
+    span.setAttributes({ error: err.message });
+  - |
+    logger.error({ err: err.message }, 'failed');
+  # No prom-client import, so `.set` here is somebody else's method. This exact
+  # shape is a typeorm query builder, and it cost 8 false positives on n8n.
+  - |
+    qb.update(Col).set({ index: () => `index + ${delta}` });
+  # Interpolation proves nothing about what is interpolated.
+  - |
+    import { Histogram } from 'prom-client';
+    lat.observe({ key: `${method}-${code}` }, ms);
+invalid:
+  - |
+    import { Counter } from 'prom-client';
+    failures.inc({ error: err.message });
+  - |
+    import { Counter } from 'prom-client';
+    reqs.inc({ route: req.path });
+  - |
+    import { Counter } from 'prom-client';
+    ids.labels({ id: crypto.randomUUID() }).inc();

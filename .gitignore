@@ -1,0 +1,11 @@
+/bin/
+/dist/
+*.exe
+coverage.out
+*.test
+*.prof
+.env
+.envrc
+.DS_Store
+.idea/
+.vscode/

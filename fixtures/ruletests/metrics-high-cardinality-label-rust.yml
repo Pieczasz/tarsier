@@ -1,0 +1,18 @@
+id: metrics-high-cardinality-label-rust
+valid:
+  - |
+    fn f() { let c = CounterVec::new(opts, &["status", "region"]).unwrap(); }
+  # A plain string slice is not a metric label set.
+  - |
+    fn f() { let fields = &["user_id", "action"]; }
+  # Cardinality is free on traces - span attributes must never be flagged.
+  - |
+    fn f() { span.set_attribute(KeyValue::new("user_id", id)); }
+  # The metric is *named* "url"; its only label is bounded.
+  - |
+    fn f() { let c = register_counter_vec!("url", "Requests.", &["status"]).unwrap(); }
+invalid:
+  - |
+    fn f() { let c = register_counter_vec!("orders_total", "Orders.", &["user_id", "status"]).unwrap(); }
+  - |
+    fn f() { let c = CounterVec::new(opts, &["email"]).unwrap(); }

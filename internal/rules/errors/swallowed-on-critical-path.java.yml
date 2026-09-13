@@ -1,0 +1,46 @@
+id: errors-swallowed-on-critical-path-java
+language: java
+severity: warning
+
+metadata:
+  rule: errors/swallowed-on-critical-path
+  requires: error_metric
+  expectation_layer: "1"
+  confidence: medium
+  spec_ref: semconv/exceptions
+
+message: "Empty catch swallows the failure, so the critical path looks successful."
+note: |
+  An empty catch means the worker keeps going and no span event, error
+  metric or log is recorded. The checkout looks successful until a
+  customer complains.
+
+  Fix: rethrow, or record the exception on the span and increment a
+  bounded error counter.
+
+  Confidence is medium: empty catch is the shape, not a proof of
+  "critical path" without workflow YAML. A catch that only comments, or
+  that calls printStackTrace, is handled differently - printStackTrace
+  silences this rule (it is an expression) even though it is still a
+  poor signal. See README 13.2.
+
+rule:
+  kind: catch_clause
+  all:
+    - has:
+        kind: block
+        not:
+          has:
+            stopBy: end
+            any:
+              - kind: expression_statement
+              - kind: throw_statement
+              - kind: return_statement
+              - kind: local_variable_declaration
+              - kind: if_statement
+              - kind: try_statement
+              - kind: continue_statement
+              - kind: break_statement
+              - kind: while_statement
+              - kind: for_statement
+              - kind: enhanced_for_statement

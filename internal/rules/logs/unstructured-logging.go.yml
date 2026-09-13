@@ -1,0 +1,66 @@
+id: logs-unstructured-logging-go
+language: go
+severity: info
+
+metadata:
+  rule: logs/unstructured-logging
+  requires: structured_logs
+  expectation_layer: "4"
+  confidence: medium
+
+message: "$CALL writes an unstructured log line, but this file already imports a structured logger."
+note: |
+  An unstructured line cannot be queried by field and carries no trace
+  correlation, so it is invisible to a LogQL join and useless during an
+  incident. Replace it with the structured logger already imported here:
+
+    slog.Error("order failed", "order_id", id, "err", err)
+
+rule:
+  kind: selector_expression
+  pattern: $CALL
+  regex: '^(log|fmt)\.(Printf|Println|Print)$'
+  all:
+    - inside:
+        kind: call_expression
+    - any:
+        - all:
+            - regex: '^log\.'
+            - inside:
+                stopBy: end
+                kind: source_file
+                has:
+                  stopBy: end
+                  kind: import_spec
+                  all:
+                    - has: {kind: interpreted_string_literal, regex: '^"log"$'}
+                    - not: {has: {kind: package_identifier}}
+        - all:
+            - regex: '^fmt\.'
+            - inside:
+                kind: call_expression
+                has:
+                  kind: argument_list
+                  has:
+                    stopBy: end
+                    any:
+                      - {kind: identifier, regex: '^err$'}
+                      - {pattern: $E.Error()}
+            - inside:
+                stopBy: end
+                kind: source_file
+                has:
+                  stopBy: end
+                  kind: import_spec
+                  all:
+                    - has: {kind: interpreted_string_literal, regex: '^"fmt"$'}
+                    - not: {has: {kind: package_identifier}}
+    - inside:
+        stopBy: end
+        kind: source_file
+        has:
+          stopBy: end
+          kind: import_spec
+          has:
+            kind: interpreted_string_literal
+            regex: '^"(log/slog|github\.com/rs/zerolog|go\.uber\.org/zap|github\.com/sirupsen/logrus)"$'

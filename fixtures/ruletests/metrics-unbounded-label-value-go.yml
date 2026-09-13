@@ -1,0 +1,25 @@
+id: metrics-unbounded-label-value-go
+valid:
+  # Literals are the whole point of a label.
+  - |
+    func f() { reqs.WithLabelValues("GET", "200").Inc() }
+  # A plain variable is unknowable here; proving it needs the deep tier, and
+  # guessing would reintroduce the false positives this rule exists to avoid.
+  - |
+    func f() { reqs.WithLabelValues(status).Inc() }
+  # Formatting proves nothing about what is being formatted. coder formats a
+  # boolean comparison into a label, which has exactly two values.
+  - |
+    func f() { g.WithLabelValues(fmt.Sprintf("%v", node.PreferredDERP == regionID)) }
+  # Same expressions, not a label: cardinality is free on traces and in logs.
+  - |
+    func f() { span.SetAttributes(attribute.String("error", err.Error())) }
+  - |
+    func f() { slog.Error("failed", "err", err.Error()) }
+invalid:
+  - |
+    func f() { errs.WithLabelValues(err.Error()).Inc() }
+  - |
+    func f() { reqs.WithLabelValues(r.URL.Path).Inc() }
+  - |
+    func f() { ids.WithLabelValues(uuid.NewString()).Inc() }

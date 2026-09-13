@@ -1,0 +1,91 @@
+id: msgtrace-kafka-consume-no-extract-java
+snapshots:
+  ? |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      @org.springframework.kafka.annotation.KafkaListener(topics = "orders")
+      public void listen(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+  : labels:
+    - source: |-
+        @org.springframework.kafka.annotation.KafkaListener(topics = "orders")
+          public void listen(ConsumerRecord<String, String> record) {
+            use(record.value());
+          }
+      style: primary
+      start: 69
+      end: 230
+    - source: void
+      style: secondary
+      start: 149
+      end: 153
+    - source: ConsumerRecord
+      style: secondary
+      start: 161
+      end: 175
+    - source: ConsumerRecord<String, String> record
+      style: secondary
+      start: 161
+      end: 198
+    - source: import org.apache.kafka.clients.consumer.ConsumerRecord;
+      style: secondary
+      start: 0
+      end: 56
+    - source: |
+        import org.apache.kafka.clients.consumer.ConsumerRecord;
+        class C {
+          @org.springframework.kafka.annotation.KafkaListener(topics = "orders")
+          public void listen(ConsumerRecord<String, String> record) {
+            use(record.value());
+          }
+          void use(String v) {}
+        }
+      style: secondary
+      start: 0
+      end: 257
+  ? |
+    import org.apache.kafka.clients.consumer.ConsumerRecord;
+    class C {
+      public void onOrder(ConsumerRecord<String, String> record) {
+        use(record.value());
+      }
+      void use(String v) {}
+    }
+  : labels:
+    - source: |-
+        public void onOrder(ConsumerRecord<String, String> record) {
+            use(record.value());
+          }
+      style: primary
+      start: 69
+      end: 158
+    - source: void
+      style: secondary
+      start: 76
+      end: 80
+    - source: ConsumerRecord
+      style: secondary
+      start: 89
+      end: 103
+    - source: ConsumerRecord<String, String> record
+      style: secondary
+      start: 89
+      end: 126
+    - source: import org.apache.kafka.clients.consumer.ConsumerRecord;
+      style: secondary
+      start: 0
+      end: 56
+    - source: |
+        import org.apache.kafka.clients.consumer.ConsumerRecord;
+        class C {
+          public void onOrder(ConsumerRecord<String, String> record) {
+            use(record.value());
+          }
+          void use(String v) {}
+        }
+      style: secondary
+      start: 0
+      end: 185

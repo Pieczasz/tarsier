@@ -1,0 +1,164 @@
+id: msgtrace-kafka-produce-no-inject-ts
+snapshots:
+  ? |
+    import { Kafka } from "kafkajs";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+    }
+  : labels:
+    - source: '{ key: "k", value: "v" }'
+      style: primary
+      start: 120
+      end: 144
+    - source: key
+      style: secondary
+      start: 122
+      end: 125
+    - source: 'key: "k"'
+      style: secondary
+      start: 122
+      end: 130
+    - source: messages
+      style: secondary
+      start: 109
+      end: 117
+    - source: 'messages: [{ key: "k", value: "v" }]'
+      style: secondary
+      start: 109
+      end: 145
+    - source: '[{ key: "k", value: "v" }]'
+      style: secondary
+      start: 119
+      end: 145
+    - source: p.send
+      style: secondary
+      start: 83
+      end: 89
+    - source: 'p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] })'
+      style: secondary
+      start: 83
+      end: 148
+    - source: '"kafkajs"'
+      style: secondary
+      start: 22
+      end: 31
+    - source: import { Kafka } from "kafkajs";
+      style: secondary
+      start: 0
+      end: 32
+    - source: |
+        import { Kafka } from "kafkajs";
+        async function f(p: { send: Function }) {
+          await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+        }
+      style: secondary
+      start: 0
+      end: 152
+  ? |
+    import { Kafka } from "kafkajs";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ value: "v" }] });
+    }
+  : labels:
+    - source: '{ value: "v" }'
+      style: primary
+      start: 120
+      end: 134
+    - source: value
+      style: secondary
+      start: 122
+      end: 127
+    - source: 'value: "v"'
+      style: secondary
+      start: 122
+      end: 132
+    - source: messages
+      style: secondary
+      start: 109
+      end: 117
+    - source: 'messages: [{ value: "v" }]'
+      style: secondary
+      start: 109
+      end: 135
+    - source: '[{ value: "v" }]'
+      style: secondary
+      start: 119
+      end: 135
+    - source: p.send
+      style: secondary
+      start: 83
+      end: 89
+    - source: 'p.send({ topic: "orders", messages: [{ value: "v" }] })'
+      style: secondary
+      start: 83
+      end: 138
+    - source: '"kafkajs"'
+      style: secondary
+      start: 22
+      end: 31
+    - source: import { Kafka } from "kafkajs";
+      style: secondary
+      start: 0
+      end: 32
+    - source: |
+        import { Kafka } from "kafkajs";
+        async function f(p: { send: Function }) {
+          await p.send({ topic: "orders", messages: [{ value: "v" }] });
+        }
+      style: secondary
+      start: 0
+      end: 142
+  ? |
+    import { KafkaJS } from "@confluentinc/kafka-javascript";
+    async function f(p: { send: Function }) {
+      await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+    }
+  : labels:
+    - source: '{ key: "k", value: "v" }'
+      style: primary
+      start: 145
+      end: 169
+    - source: key
+      style: secondary
+      start: 147
+      end: 150
+    - source: 'key: "k"'
+      style: secondary
+      start: 147
+      end: 155
+    - source: messages
+      style: secondary
+      start: 134
+      end: 142
+    - source: 'messages: [{ key: "k", value: "v" }]'
+      style: secondary
+      start: 134
+      end: 170
+    - source: '[{ key: "k", value: "v" }]'
+      style: secondary
+      start: 144
+      end: 170
+    - source: p.send
+      style: secondary
+      start: 108
+      end: 114
+    - source: 'p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] })'
+      style: secondary
+      start: 108
+      end: 173
+    - source: '"@confluentinc/kafka-javascript"'
+      style: secondary
+      start: 24
+      end: 56
+    - source: import { KafkaJS } from "@confluentinc/kafka-javascript";
+      style: secondary
+      start: 0
+      end: 57
+    - source: |
+        import { KafkaJS } from "@confluentinc/kafka-javascript";
+        async function f(p: { send: Function }) {
+          await p.send({ topic: "orders", messages: [{ key: "k", value: "v" }] });
+        }
+      style: secondary
+      start: 0
+      end: 177

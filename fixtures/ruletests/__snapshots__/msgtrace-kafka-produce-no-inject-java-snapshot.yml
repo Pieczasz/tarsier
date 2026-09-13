@@ -1,0 +1,90 @@
+id: msgtrace-kafka-produce-no-inject-java
+snapshots:
+  ? |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String key, String value) {
+        p.send(new ProducerRecord<>(topic, key, value));
+      }
+    }
+  : labels:
+    - source: new ProducerRecord<>(topic, key, value)
+      style: primary
+      start: 218
+      end: 257
+    - source: ProducerRecord<>
+      style: secondary
+      start: 222
+      end: 238
+    - source: send
+      style: secondary
+      start: 213
+      end: 217
+    - source: p.send(new ProducerRecord<>(topic, key, value))
+      style: secondary
+      start: 211
+      end: 258
+    - source: (new ProducerRecord<>(topic, key, value))
+      style: secondary
+      start: 217
+      end: 258
+    - source: import org.apache.kafka.clients.producer.KafkaProducer;
+      style: secondary
+      start: 0
+      end: 55
+    - source: |
+        import org.apache.kafka.clients.producer.KafkaProducer;
+        import org.apache.kafka.clients.producer.ProducerRecord;
+        class P {
+          void f(KafkaProducer<String, String> p, String topic, String key, String value) {
+            p.send(new ProducerRecord<>(topic, key, value));
+          }
+        }
+      style: secondary
+      start: 0
+      end: 266
+  ? |
+    import org.apache.kafka.clients.producer.KafkaProducer;
+    import org.apache.kafka.clients.producer.ProducerRecord;
+    class P {
+      void f(KafkaProducer<String, String> p, String topic, String value) {
+        p.send(new ProducerRecord<>(topic, value));
+      }
+    }
+  : labels:
+    - source: new ProducerRecord<>(topic, value)
+      style: primary
+      start: 206
+      end: 240
+    - source: ProducerRecord<>
+      style: secondary
+      start: 210
+      end: 226
+    - source: send
+      style: secondary
+      start: 201
+      end: 205
+    - source: p.send(new ProducerRecord<>(topic, value))
+      style: secondary
+      start: 199
+      end: 241
+    - source: (new ProducerRecord<>(topic, value))
+      style: secondary
+      start: 205
+      end: 241
+    - source: import org.apache.kafka.clients.producer.KafkaProducer;
+      style: secondary
+      start: 0
+      end: 55
+    - source: |
+        import org.apache.kafka.clients.producer.KafkaProducer;
+        import org.apache.kafka.clients.producer.ProducerRecord;
+        class P {
+          void f(KafkaProducer<String, String> p, String topic, String value) {
+            p.send(new ProducerRecord<>(topic, value));
+          }
+        }
+      style: secondary
+      start: 0
+      end: 249

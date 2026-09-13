@@ -1,0 +1,124 @@
+id: msgtrace-kafka-consume-no-extract-go
+snapshots:
+  ? |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, r *kafka.Reader) error {
+        m, err := r.FetchMessage(ctx)
+        if err != nil {
+            return err
+        }
+        return handle(m.Value)
+    }
+    func handle(v []byte) error { return nil }
+  : labels:
+    - source: r.FetchMessage(ctx)
+      style: primary
+      start: 141
+      end: 160
+    - source: r.FetchMessage
+      style: secondary
+      start: 141
+      end: 155
+    - source: |
+        package main
+        import (
+            "context"
+            "github.com/segmentio/kafka-go"
+        )
+        func f(ctx context.Context, r *kafka.Reader) error {
+            m, err := r.FetchMessage(ctx)
+            if err != nil {
+                return err
+            }
+            return handle(m.Value)
+        }
+        func handle(v []byte) error { return nil }
+      style: secondary
+      start: 0
+      end: 278
+  ? |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, r *kafka.Reader) {
+        for {
+            m, err := r.ReadMessage(ctx)
+            if err != nil {
+                return
+            }
+            _ = m.Value
+        }
+    }
+  : labels:
+    - source: r.ReadMessage(ctx)
+      style: primary
+      start: 149
+      end: 167
+    - source: r.ReadMessage
+      style: secondary
+      start: 149
+      end: 162
+    - source: |
+        package main
+        import (
+            "context"
+            "github.com/segmentio/kafka-go"
+        )
+        func f(ctx context.Context, r *kafka.Reader) {
+            for {
+                m, err := r.ReadMessage(ctx)
+                if err != nil {
+                    return
+                }
+                _ = m.Value
+            }
+        }
+      style: secondary
+      start: 0
+      end: 249
+  ? |
+    package main
+    import (
+        "context"
+        "github.com/twmb/franz-go/pkg/kgo"
+    )
+    func f(ctx context.Context, cl *kgo.Client) {
+        fetches := cl.PollFetches(ctx)
+        fetches.EachPartition(func(p kgo.FetchTopicPartition) {
+            for _, r := range p.Records {
+                _ = r.Value
+            }
+        })
+    }
+  : labels:
+    - source: cl.PollFetches(ctx)
+      style: primary
+      start: 138
+      end: 157
+    - source: cl.PollFetches
+      style: secondary
+      start: 138
+      end: 152
+    - source: |
+        package main
+        import (
+            "context"
+            "github.com/twmb/franz-go/pkg/kgo"
+        )
+        func f(ctx context.Context, cl *kgo.Client) {
+            fetches := cl.PollFetches(ctx)
+            fetches.EachPartition(func(p kgo.FetchTopicPartition) {
+                for _, r := range p.Records {
+                    _ = r.Value
+                }
+            })
+        }
+      style: secondary
+      start: 0
+      end: 299

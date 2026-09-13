@@ -1,0 +1,36 @@
+id: otel-sdk-missing-resource-attrs-go
+snapshots:
+  ? |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel/sdk/resource"
+    )
+    func f(ctx context.Context) {
+        resource.New(ctx)
+    }
+  : labels:
+    - source: resource.New(ctx)
+      style: primary
+      start: 116
+      end: 133
+    - source: resource.New
+      style: secondary
+      start: 116
+      end: 128
+    - source: '"go.opentelemetry.io/otel/sdk/resource"'
+      style: secondary
+      start: 40
+      end: 79
+    - source: |
+        package main
+        import (
+            "context"
+            "go.opentelemetry.io/otel/sdk/resource"
+        )
+        func f(ctx context.Context) {
+            resource.New(ctx)
+        }
+      style: secondary
+      start: 0
+      end: 136

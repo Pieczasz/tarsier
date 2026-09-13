@@ -1,0 +1,50 @@
+id: metrics-high-cardinality-label-rust
+language: rust
+severity: warning
+
+metadata:
+  rule: metrics/high-cardinality-label
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label $LABEL is unbounded; each distinct value mints a new billable time series."
+note: |
+  Unbounded labels are the single largest driver of observability cost.
+  Drop the label, or replace it with a bounded dimension (status, route,
+  region). If you need per-user detail, put it on a span or an exemplar -
+  high cardinality is free on traces and ruinous on metrics.
+
+rule:
+  kind: string_literal
+  pattern: $LABEL
+  matches: is-unbounded-label
+  any:
+    - inside:
+        kind: token_tree
+        inside:
+          stopBy: end
+          kind: token_tree
+          inside:
+            kind: macro_invocation
+            has:
+              field: macro
+              pattern: $MACRO
+
+    # CounterVec::new(opts, &["user_id"]) / IntGaugeVec::new(...)
+    - inside:
+        stopBy: end
+        kind: array_expression
+        inside:
+          stopBy: end
+          kind: call_expression
+          has:
+            field: function
+            pattern: $CTOR
+
+constraints:
+  MACRO:
+    regex: 'register_.*_vec$'
+  CTOR:
+    regex: 'Vec::new$'

@@ -1,0 +1,29 @@
+id: logs-missing-trace-correlation-go
+valid:
+  - |
+    package main
+    import "log/slog"
+    func f() { slog.New(slog.NewTextHandler(nil, nil)) }
+  - |
+    package main
+    import (
+      "log/slog"
+      "go.opentelemetry.io/otel"
+      "go.opentelemetry.io/contrib/bridges/otelslog"
+    )
+    func f() {
+      _ = otel.GetTracerProvider()
+      slog.New(otelslog.NewHandler("x"))
+    }
+invalid:
+  - |
+    package main
+    import (
+      "log/slog"
+      "os"
+      "go.opentelemetry.io/otel"
+    )
+    func f() {
+      _ = otel.GetTracerProvider()
+      slog.New(slog.NewJSONHandler(os.Stdout, nil))
+    }

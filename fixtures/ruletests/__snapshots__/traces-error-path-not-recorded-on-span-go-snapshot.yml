@@ -1,0 +1,176 @@
+id: traces-error-path-not-recorded-on-span-go
+snapshots:
+  ? |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+        "go.opentelemetry.io/otel/codes"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            return err
+        } else {
+            span.SetStatus(codes.Ok, "")
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  : labels:
+    - source: |-
+        if err := reserve(); err != nil {
+                return err
+            } else {
+                span.SetStatus(codes.Ok, "")
+            }
+      style: primary
+      start: 226
+      end: 334
+    - source: err != nil
+      style: secondary
+      start: 247
+      end: 257
+    - source: return err
+      style: secondary
+      start: 268
+      end: 278
+    - source: return err
+      style: secondary
+      start: 268
+      end: 278
+    - source: |-
+        {
+            ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+            defer span.End()
+            if err := reserve(); err != nil {
+                return err
+            } else {
+                span.SetStatus(codes.Ok, "")
+            }
+            return nil
+        }
+      style: secondary
+      start: 140
+      end: 351
+    - source: |-
+        func f(ctx context.Context) error {
+            ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+            defer span.End()
+            if err := reserve(); err != nil {
+                return err
+            } else {
+                span.SetStatus(codes.Ok, "")
+            }
+            return nil
+        }
+      style: secondary
+      start: 106
+      end: 351
+    - source: '"go.opentelemetry.io/otel"'
+      style: secondary
+      start: 40
+      end: 66
+    - source: |
+        package main
+        import (
+            "context"
+            "go.opentelemetry.io/otel"
+            "go.opentelemetry.io/otel/codes"
+        )
+        func f(ctx context.Context) error {
+            ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+            defer span.End()
+            if err := reserve(); err != nil {
+                return err
+            } else {
+                span.SetStatus(codes.Ok, "")
+            }
+            return nil
+        }
+        func reserve() error { return nil }
+      style: secondary
+      start: 0
+      end: 388
+  ? |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            return err
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  : labels:
+    - source: |-
+        if err := reserve(); err != nil {
+                return err
+            }
+      style: primary
+      start: 189
+      end: 247
+    - source: err != nil
+      style: secondary
+      start: 210
+      end: 220
+    - source: return err
+      style: secondary
+      start: 231
+      end: 241
+    - source: return err
+      style: secondary
+      start: 231
+      end: 241
+    - source: |-
+        {
+            ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+            defer span.End()
+            if err := reserve(); err != nil {
+                return err
+            }
+            return nil
+        }
+      style: secondary
+      start: 103
+      end: 264
+    - source: |-
+        func f(ctx context.Context) error {
+            ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+            defer span.End()
+            if err := reserve(); err != nil {
+                return err
+            }
+            return nil
+        }
+      style: secondary
+      start: 69
+      end: 264
+    - source: '"go.opentelemetry.io/otel"'
+      style: secondary
+      start: 40
+      end: 66
+    - source: |
+        package main
+        import (
+            "context"
+            "go.opentelemetry.io/otel"
+        )
+        func f(ctx context.Context) error {
+            ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+            defer span.End()
+            if err := reserve(); err != nil {
+                return err
+            }
+            return nil
+        }
+        func reserve() error { return nil }
+      style: secondary
+      start: 0
+      end: 301

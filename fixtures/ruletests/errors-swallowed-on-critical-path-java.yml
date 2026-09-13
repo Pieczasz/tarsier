@@ -1,0 +1,47 @@
+id: errors-swallowed-on-critical-path-java
+valid:
+  # Catch body records the exception.
+  - |
+    class C {
+      void f() {
+        try { persist(); } catch (RuntimeException e) { log(e); }
+      }
+      void persist() {}
+      void log(RuntimeException e) {}
+    }
+  # Rethrow.
+  - |
+    class C {
+      void f() {
+        try { persist(); } catch (RuntimeException e) { throw e; }
+      }
+      void persist() {}
+    }
+  # Explicit continue in a consume loop - not an empty swallow.
+  - |
+    class C {
+      void f() {
+        while (true) {
+          try { persist(); } catch (RuntimeException e) { continue; }
+        }
+      }
+      void persist() {}
+    }
+  # Explicit break out of the poll loop.
+  - |
+    class C {
+      void f() {
+        while (true) {
+          try { persist(); } catch (RuntimeException e) { break; }
+        }
+      }
+      void persist() {}
+    }
+invalid:
+  - |
+    class C {
+      void f() {
+        try { persist(); } catch (RuntimeException e) { }
+      }
+      void persist() {}
+    }

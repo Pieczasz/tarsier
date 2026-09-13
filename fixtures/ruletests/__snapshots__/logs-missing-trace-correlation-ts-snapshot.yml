@@ -1,0 +1,30 @@
+id: logs-missing-trace-correlation-ts
+snapshots:
+  ? |
+    import pino from 'pino';
+    import '@opentelemetry/api';
+    const log = pino();
+  : labels:
+    - source: pino()
+      style: primary
+      start: 66
+      end: 72
+    - source: pino
+      style: secondary
+      start: 66
+      end: 70
+    - source: '''@opentelemetry/api'''
+      style: secondary
+      start: 32
+      end: 52
+    - source: import '@opentelemetry/api';
+      style: secondary
+      start: 25
+      end: 53
+    - source: |
+        import pino from 'pino';
+        import '@opentelemetry/api';
+        const log = pino();
+      style: secondary
+      start: 0
+      end: 74

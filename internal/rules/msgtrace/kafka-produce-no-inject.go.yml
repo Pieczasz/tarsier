@@ -1,0 +1,50 @@
+id: msgtrace-kafka-produce-no-inject-go
+language: go
+severity: warning
+
+metadata:
+  rule: msgtrace/kafka-produce-no-inject
+  requires: trace_propagation
+  expectation_layer: "1"
+  confidence: high
+  spec_ref: semconv/messaging@1.44
+
+message: "Message published with no Headers, so consumers start orphan traces."
+note: |
+  Without trace context in the message headers the consumer cannot join the
+  producer's trace and starts an orphan root span. The checkout trace appears
+  as two disconnected traces in your backend.
+
+  Fix per client:
+    segmentio/kafka-go: set msg.Headers with the propagator before WriteMessages
+    IBM/sarama: set ProducerMessage.Headers before SendMessage
+    franz-go (kgo): set Record.Headers before Produce/ProduceSync
+    Prefer a client interceptor (kotel, otelsarama, otelconfluent) if you have one.
+
+  Ceiling: injection via a client hook or interceptor (kotel, Java agent,
+  @opentelemetry/instrumentation-kafkajs) is invisible to a per-file rule.
+  A message built outside the produce call and an aliased Kafka import are
+  also missed. Any Headers key counts as instrumented, so business-only
+  headers and an explicit `Headers: nil` are missed too - gating on a
+  traceparent/b3 key would instead flag `Headers: hdrs`, where the keys are
+  not in the literal. See README 13.2 for the full list.
+
+rule:
+  kind: composite_literal
+  all:
+    - has: {field: type, regex: '^(kafka|sarama|kgo)\.(Message|ProducerMessage|Record)$'}
+    - not:
+        has:
+          kind: literal_value
+          has:
+            kind: keyed_element
+            has: {field: key, regex: '^Headers$'}
+    - inside:
+        stopBy: {kind: argument_list}
+        kind: argument_list
+        inside:
+          kind: call_expression
+          has:
+            field: function
+            regex: '\.(WriteMessages|SendMessage|SendMessages|Produce|ProduceSync)$'
+    - inside: {stopBy: end, matches: kafka-client-imported}

@@ -1,0 +1,162 @@
+id: metrics-high-cardinality-label-python
+snapshots:
+  ? |
+    checkout = Histogram('checkout_seconds', 'Latency.', labelnames=['email'])
+  : labels:
+    - source: '''email'''
+      style: primary
+      start: 65
+      end: 72
+    - source: Histogram
+      style: secondary
+      start: 11
+      end: 20
+    - source: Histogram('checkout_seconds', 'Latency.', labelnames=['email'])
+      style: secondary
+      start: 11
+      end: 74
+    - source: ('checkout_seconds', 'Latency.', labelnames=['email'])
+      style: secondary
+      start: 20
+      end: 74
+    - source: '[''email'']'
+      style: secondary
+      start: 64
+      end: 73
+  ? |
+    from opentelemetry import metrics
+    counter.add(1, {"session_id": sid, "status": status})
+  : labels:
+    - source: '"session_id"'
+      style: primary
+      start: 50
+      end: 62
+    - source: 'counter.add(1, {"session_id": sid, "status": status})'
+      style: secondary
+      start: 34
+      end: 87
+    - source: '(1, {"session_id": sid, "status": status})'
+      style: secondary
+      start: 45
+      end: 87
+    - source: '{"session_id": sid, "status": status}'
+      style: secondary
+      start: 49
+      end: 86
+    - source: '"session_id": sid'
+      style: secondary
+      start: 50
+      end: 67
+    - source: opentelemetry
+      style: secondary
+      start: 5
+      end: 18
+    - source: from opentelemetry import metrics
+      style: secondary
+      start: 0
+      end: 33
+    - source: |
+        from opentelemetry import metrics
+        counter.add(1, {"session_id": sid, "status": status})
+      style: secondary
+      start: 0
+      end: 88
+  ? |
+    from prometheus_client import Counter
+    orders = Counter('orders_total', 'Orders.', ['user_id', 'status'])
+  : labels:
+    - source: '''user_id'''
+      style: primary
+      start: 83
+      end: 92
+    - source: Counter
+      style: secondary
+      start: 47
+      end: 54
+    - source: Counter('orders_total', 'Orders.', ['user_id', 'status'])
+      style: secondary
+      start: 47
+      end: 104
+    - source: ('orders_total', 'Orders.', ['user_id', 'status'])
+      style: secondary
+      start: 54
+      end: 104
+    - source: '[''user_id'', ''status'']'
+      style: secondary
+      start: 82
+      end: 103
+    - source: prometheus_client
+      style: secondary
+      start: 5
+      end: 22
+    - source: from prometheus_client import Counter
+      style: secondary
+      start: 0
+      end: 37
+    - source: |
+        from prometheus_client import Counter
+        orders = Counter('orders_total', 'Orders.', ['user_id', 'status'])
+      style: secondary
+      start: 0
+      end: 105
+  ? |
+    from prometheus_client import Histogram
+    checkout = Histogram('checkout_seconds', 'Latency.', labelnames=['email'])
+  : labels:
+    - source: '''email'''
+      style: primary
+      start: 105
+      end: 112
+    - source: Histogram
+      style: secondary
+      start: 51
+      end: 60
+    - source: Histogram('checkout_seconds', 'Latency.', labelnames=['email'])
+      style: secondary
+      start: 51
+      end: 114
+    - source: ('checkout_seconds', 'Latency.', labelnames=['email'])
+      style: secondary
+      start: 60
+      end: 114
+    - source: '[''email'']'
+      style: secondary
+      start: 104
+      end: 113
+    - source: prometheus_client
+      style: secondary
+      start: 5
+      end: 22
+    - source: from prometheus_client import Histogram
+      style: secondary
+      start: 0
+      end: 39
+    - source: |
+        from prometheus_client import Histogram
+        checkout = Histogram('checkout_seconds', 'Latency.', labelnames=['email'])
+      style: secondary
+      start: 0
+      end: 115
+  ? |
+    orders = Counter('orders_total', 'Orders.', ['user_id', 'status'])
+  : labels:
+    - source: '''user_id'''
+      style: primary
+      start: 45
+      end: 54
+    - source: Counter
+      style: secondary
+      start: 9
+      end: 16
+    - source: Counter('orders_total', 'Orders.', ['user_id', 'status'])
+      style: secondary
+      start: 9
+      end: 66
+    - source: ('orders_total', 'Orders.', ['user_id', 'status'])
+      style: secondary
+      start: 16
+      end: 66
+    - source: '[''user_id'', ''status'']'
+      style: secondary
+      start: 44
+      end: 65

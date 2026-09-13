@@ -1,0 +1,86 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - contextcheck
+    - copyloopvar
+    - dupl
+    - dupword
+    - durationcheck
+    - errorlint
+    - errname
+    - exptostd
+    - forcetypeassert
+    - funlen
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gosec
+    - intrange
+    - loggercheck
+    - misspell
+    - modernize
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - predeclared
+    - revive
+    - sloglint
+    - thelper
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+
+  settings:
+    dupl:
+      threshold: 120
+    funlen:
+      lines: 120
+      statements: 80
+    goconst:
+      min-occurrences: 4
+      ignore-tests: true
+    gocritic:
+      enabled-tags: [diagnostic, style, performance]
+      disabled-checks: [ifElseChain]
+    gocyclo:
+      min-complexity: 13
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    revive:
+      rules:
+        - name: exported
+        - name: error-strings
+        - name: context-as-argument
+    sloglint:
+      no-mixed-args: true
+      key-naming-case: snake
+
+  exclusions:
+    presets: [std-error-handling]
+    rules:
+      - path: _test\.go
+        linters: [gosec, errcheck, dupl, goconst, gocyclo, funlen, nestif]
+      - path: ^fixtures/
+        linters: [gosec, errcheck, revive, sloglint, noctx, contextcheck, bodyclose]
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      extra:
+        group-params: true
+    goimports:
+      local-prefixes: [github.com/Pieczasz/tarsier]

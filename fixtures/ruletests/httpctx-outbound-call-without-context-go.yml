@@ -1,0 +1,42 @@
+id: httpctx-outbound-call-without-context-go
+valid:
+  # Contextual request + Do - the correct shape.
+  - |
+    package main
+    import (
+        "context"
+        "net/http"
+    )
+    func f(ctx context.Context, url string) (*http.Response, error) {
+        req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+        if err != nil {
+            return nil, err
+        }
+        return http.DefaultClient.Do(req)
+    }
+  # No net/http import - a different package named http.
+  - |
+    package main
+    func f(url string) { http.Get(url) }
+  # Aliased import - qualified name is only a local alias (§5).
+  - |
+    package main
+    import h "net/http"
+    func f(url string) { h.Get(url) }
+invalid:
+  - |
+    package main
+    import "net/http"
+    func f(url string) { http.Get(url) }
+  - |
+    package main
+    import "net/http"
+    func f(url, body string) { http.Post(url, "text/plain", nil) }
+  - |
+    package main
+    import "net/http"
+    func f(url string) { http.Head(url) }
+  - |
+    package main
+    import "net/http"
+    func f(url string) { http.PostForm(url, nil) }

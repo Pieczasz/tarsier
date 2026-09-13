@@ -1,0 +1,9 @@
+ruleDirs:
+  - internal/rules
+
+utilDirs:
+  - internal/ruleutils
+
+testConfigs:
+  - testDir: fixtures/ruletests
+    snapshotDir: __snapshots__

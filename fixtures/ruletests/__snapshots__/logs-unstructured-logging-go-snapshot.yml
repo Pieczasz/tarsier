@@ -1,0 +1,234 @@
+id: logs-unstructured-logging-go
+snapshots:
+  ? |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func f() { fmt.Printf("failed: %s", err.Error()) }
+  : labels:
+    - source: fmt.Printf
+      style: primary
+      start: 60
+      end: 70
+    - source: 'fmt.Printf("failed: %s", err.Error())'
+      style: secondary
+      start: 60
+      end: 97
+    - source: err.Error()
+      style: secondary
+      start: 85
+      end: 96
+    - source: '("failed: %s", err.Error())'
+      style: secondary
+      start: 70
+      end: 97
+    - source: 'fmt.Printf("failed: %s", err.Error())'
+      style: secondary
+      start: 60
+      end: 97
+    - source: '"fmt"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: '"fmt"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: |
+        package main
+        import (
+            "fmt"
+            "log/slog"
+        )
+        func f() { fmt.Printf("failed: %s", err.Error()) }
+      style: secondary
+      start: 0
+      end: 100
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: |
+        package main
+        import (
+            "fmt"
+            "log/slog"
+        )
+        func f() { fmt.Printf("failed: %s", err.Error()) }
+      style: secondary
+      start: 0
+      end: 100
+  ? |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func f() { fmt.Println("order failed", id) }
+  : labels:
+    - source: fmt.Println
+      style: primary
+      start: 60
+      end: 71
+    - source: fmt.Println("order failed", id)
+      style: secondary
+      start: 60
+      end: 91
+    - source: '"fmt"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: '"fmt"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: |
+        package main
+        import (
+            "fmt"
+            "log/slog"
+        )
+        func f() { fmt.Println("order failed", id) }
+      style: secondary
+      start: 0
+      end: 94
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: |
+        package main
+        import (
+            "fmt"
+            "log/slog"
+        )
+        func f() { fmt.Println("order failed", id) }
+      style: secondary
+      start: 0
+      end: 94
+  ? |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func f() { if err != nil { fmt.Println(err) } }
+  : labels:
+    - source: fmt.Println
+      style: primary
+      start: 76
+      end: 87
+    - source: fmt.Println(err)
+      style: secondary
+      start: 76
+      end: 92
+    - source: err
+      style: secondary
+      start: 88
+      end: 91
+    - source: (err)
+      style: secondary
+      start: 87
+      end: 92
+    - source: fmt.Println(err)
+      style: secondary
+      start: 76
+      end: 92
+    - source: '"fmt"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: '"fmt"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: |
+        package main
+        import (
+            "fmt"
+            "log/slog"
+        )
+        func f() { if err != nil { fmt.Println(err) } }
+      style: secondary
+      start: 0
+      end: 97
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: |
+        package main
+        import (
+            "fmt"
+            "log/slog"
+        )
+        func f() { if err != nil { fmt.Println(err) } }
+      style: secondary
+      start: 0
+      end: 97
+  ? |
+    package main
+    import (
+        "log"
+        "log/slog"
+    )
+    func f() { log.Printf("order %s failed", id) }
+  : labels:
+    - source: log.Printf
+      style: primary
+      start: 60
+      end: 70
+    - source: log.Printf("order %s failed", id)
+      style: secondary
+      start: 60
+      end: 93
+    - source: '"log"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: '"log"'
+      style: secondary
+      start: 26
+      end: 31
+    - source: |
+        package main
+        import (
+            "log"
+            "log/slog"
+        )
+        func f() { log.Printf("order %s failed", id) }
+      style: secondary
+      start: 0
+      end: 96
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: '"log/slog"'
+      style: secondary
+      start: 36
+      end: 46
+    - source: |
+        package main
+        import (
+            "log"
+            "log/slog"
+        )
+        func f() { log.Printf("order %s failed", id) }
+      style: secondary
+      start: 0
+      end: 96

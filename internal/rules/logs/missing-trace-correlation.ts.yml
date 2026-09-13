@@ -1,0 +1,43 @@
+id: logs-missing-trace-correlation-ts
+language: typescript
+severity: warning
+
+metadata:
+  rule: logs/missing-trace-correlation
+  requires: log_correlation
+  expectation_layer: "2"
+  confidence: medium
+  spec_ref: instrumentation-score/LOG-001
+
+message: "pino/winston is used alongside OTel without a trace-aware log bridge."
+note: |
+  Without trace_id/span_id on log records, logs cannot join traces. Prefer
+  @opentelemetry/instrumentation-pino (or winston) when OTel is already on
+  the import graph. Precision ceiling: bridge registered in another file is
+  invisible. Confidence is medium.
+
+rule:
+  kind: call_expression
+  all:
+    - has:
+        field: function
+        regex: '^(pino|winston\.createLogger)$'
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_statement
+          has:
+            field: source
+            regex: '@opentelemetry/'
+    - not:
+        inside:
+          stopBy: end
+          kind: program
+          has:
+            stopBy: end
+            kind: import_statement
+            has:
+              field: source
+              regex: '@opentelemetry/instrumentation-(pino|winston)'

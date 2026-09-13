@@ -1,0 +1,40 @@
+id: otel-sdk-missing-shutdown-go
+language: go
+severity: warning
+
+metadata:
+  rule: otel/sdk-missing-shutdown
+  requires: resource
+  expectation_layer: "2"
+  confidence: medium
+  spec_ref: otel-sdk-shutdown
+
+message: "OTel provider is constructed without Shutdown/ForceFlush on this exit path."
+note: |
+  Short-lived jobs and crash paths emit zero spans when the SDK batches and
+  the process exits without flush. Fix: defer provider.Shutdown(ctx) with a
+  bounded context, or ForceFlush before os.Exit / log.Fatal.
+
+  Confidence is medium: Shutdown in another function or signal handler is
+  invisible. Demote rather than loosen if corpus FP rate is bad.
+
+rule:
+  kind: call_expression
+  all:
+    - has:
+        field: function
+        regex: 'New(Tracer|Meter|Logger)Provider$'
+    - inside:
+        stopBy: end
+        kind: function_declaration
+        not:
+          has:
+            stopBy: end
+            regex: '\.(Shutdown|ForceFlush)\s*\('
+    - inside:
+        stopBy: end
+        kind: source_file
+        has:
+          stopBy: end
+          kind: import_spec
+          regex: 'go\.opentelemetry\.io/otel/sdk'

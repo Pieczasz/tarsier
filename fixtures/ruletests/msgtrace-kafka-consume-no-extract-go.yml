@@ -1,0 +1,177 @@
+id: msgtrace-kafka-consume-no-extract-go
+valid:
+  # Extracted in the enclosing block - the correct shape.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+        "go.opentelemetry.io/otel/propagation"
+    )
+    func f(ctx context.Context, r *kafka.Reader, p propagation.TextMapPropagator) {
+        for {
+            m, err := r.ReadMessage(ctx)
+            if err != nil {
+                return
+            }
+            ctx = p.Extract(ctx, propagation.HeaderCarrier(m.Headers))
+            _ = ctx
+        }
+    }
+  # A business-only .Headers read counts as handled - the documented ceiling:
+  # any reference in the enclosing block silences the rule.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, r *kafka.Reader) {
+        for {
+            m, err := r.ReadMessage(ctx)
+            if err != nil {
+                return
+            }
+            logHeaders(m.Headers)
+        }
+    }
+    func logHeaders(h []kafka.Header) {}
+  # The crowdsec shape: a method *declaration* named ReadMessage must not
+  # match the selector-expression anchor, and the handled call must not fire.
+  # crowdsec/pkg/acquisition/modules/kafka/run.go:19 declares
+  # func (s *Source) ReadMessage(...); line 30 calls s.Reader.ReadMessage(ctx).
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+        "go.opentelemetry.io/otel/propagation"
+    )
+    type Source struct{ Reader *kafka.Reader }
+    func (s *Source) ReadMessage(ctx context.Context) {}
+    func (s *Source) Run(ctx context.Context, p propagation.TextMapPropagator) {
+        m, err := s.Reader.ReadMessage(ctx)
+        if err != nil {
+            return
+        }
+        ctx = p.Extract(ctx, propagation.HeaderCarrier(m.Headers))
+        _ = ctx
+    }
+  # franz-go with extraction - the PollFetches anchor, handled.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/twmb/franz-go/pkg/kgo"
+        "go.opentelemetry.io/otel/propagation"
+    )
+    func f(ctx context.Context, cl *kgo.Client, p propagation.TextMapPropagator) {
+        fetches := cl.PollFetches(ctx)
+        fetches.EachRecord(func(r *kgo.Record) {
+            ctx = p.Extract(ctx, propagation.HeaderCarrier(r.Headers))
+            _ = ctx
+        })
+    }
+  # Multi-argument call to a same-named local wrapper - client read APIs take
+  # exactly ctx, so this cannot be a client read. The crowdsec shape:
+  # crowdsec/pkg/acquisition/modules/kafka/run.go:66 calls
+  # s.ReadMessage(ctx, out), delegating to the local method.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+        "go.opentelemetry.io/otel/propagation"
+    )
+    type Source struct{ Reader *kafka.Reader }
+    func (s *Source) ReadMessage(ctx context.Context, out chan string, p propagation.TextMapPropagator) error {
+        for {
+            m, err := s.Reader.ReadMessage(ctx)
+            if err != nil {
+                return err
+            }
+            ctx = p.Extract(ctx, propagation.HeaderCarrier(m.Headers))
+            out <- string(m.Value)
+        }
+        return nil
+    }
+    func (s *Source) Run(ctx context.Context, out chan string, p propagation.TextMapPropagator) error {
+        return s.ReadMessage(ctx, out, p)
+    }
+  # Read call in a file with no Kafka import - the import gate saves it.
+  - |
+    package main
+    import "context"
+    type Reader struct{}
+    func (r *Reader) ReadMessage(ctx context.Context) (string, error) { return "", nil }
+    func f(ctx context.Context, r *Reader) {
+        for {
+            _, err := r.ReadMessage(ctx)
+            if err != nil {
+                return
+            }
+        }
+    }
+  # sarama consume is channel-based: ConsumeClaim drains claim.Messages(),
+  # which has no anchored call shape, so it is out of scope by design.
+  - |
+    package main
+    import (
+        "github.com/IBM/sarama"
+    )
+    type consumer struct{}
+    func (c *consumer) ConsumeClaim(s sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+        for msg := range claim.Messages() {
+            _ = msg.Value
+        }
+        return nil
+    }
+
+invalid:
+  # segmentio - the crowdsec shape: ReadMessage in a loop, headers never touched.
+  # crowdsec/pkg/acquisition/modules/kafka/run.go:30.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, r *kafka.Reader) {
+        for {
+            m, err := r.ReadMessage(ctx)
+            if err != nil {
+                return
+            }
+            _ = m.Value
+        }
+    }
+  # segmentio FetchMessage without any header handling.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, r *kafka.Reader) error {
+        m, err := r.FetchMessage(ctx)
+        if err != nil {
+            return err
+        }
+        return handle(m.Value)
+    }
+    func handle(v []byte) error { return nil }
+  # franz-go - PollFetches with no extraction anywhere in the block.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/twmb/franz-go/pkg/kgo"
+    )
+    func f(ctx context.Context, cl *kgo.Client) {
+        fetches := cl.PollFetches(ctx)
+        fetches.EachPartition(func(p kgo.FetchTopicPartition) {
+            for _, r := range p.Records {
+                _ = r.Value
+            }
+        })
+    }

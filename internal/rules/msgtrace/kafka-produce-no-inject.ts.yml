@@ -1,0 +1,71 @@
+id: msgtrace-kafka-produce-no-inject-ts
+language: typescript
+severity: warning
+
+metadata:
+  rule: msgtrace/kafka-produce-no-inject
+  requires: trace_propagation
+  expectation_layer: "1"
+  confidence: medium
+  spec_ref: semconv/messaging@1.44
+
+message: "Message published with no headers, so consumers start orphan traces."
+note: |
+  Without trace context in the message headers the consumer cannot join the
+  producer's trace and starts an orphan root span. The checkout trace appears
+  as two disconnected traces in your backend.
+
+  Fix: set headers.traceparent (or the OTel propagator inject) on each
+  messages[] entry before producer.send. Prefer
+  @opentelemetry/instrumentation-kafkajs, which injects with no code change.
+
+  Confidence is medium: @opentelemetry/instrumentation-kafkajs and
+  auto-instrumentations-node inject at runtime with zero source headers, so a
+  headerless send is correct when those packages are used. This rule
+  suppresses when the *same file* imports them. Registration in another file
+  is invisible - same class as Go kotel. sendBatch, messages built away from
+  send, and the consume side are out of scope (consume is a gap: - auto-instr
+  is the Node idiom). See README 13.2.
+
+rule:
+  kind: object
+  all:
+    - has:
+        kind: pair
+        has: {field: key, regex: '^(key|value)$'}
+    - not:
+        has:
+          kind: pair
+          has: {field: key, regex: '^headers$'}
+    - inside:
+        stopBy: end
+        kind: array
+        inside:
+          stopBy: end
+          kind: pair
+          has: {field: key, regex: '^messages$'}
+    - inside:
+        stopBy: end
+        kind: call_expression
+        has:
+          field: function
+          regex: '\.send$'
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_statement
+          has:
+            field: source
+            regex: '(kafkajs|@confluentinc/kafka-javascript|node-rdkafka)'
+    - not:
+        inside:
+          stopBy: end
+          kind: program
+          has:
+            stopBy: end
+            kind: import_statement
+            has:
+              field: source
+              regex: '@opentelemetry/(instrumentation-kafkajs|auto-instrumentations-node)'

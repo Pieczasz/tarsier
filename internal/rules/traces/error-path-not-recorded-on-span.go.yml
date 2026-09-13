@@ -1,0 +1,69 @@
+id: traces-error-path-not-recorded-on-span-go
+language: go
+severity: warning
+
+metadata:
+  rule: traces/error-path-not-recorded-on-span
+  requires: trace
+  expectation_layer: "1"
+  confidence: medium
+  spec_ref: semconv/exceptions
+
+message: "Error is returned without recording it on the span, so the trace looks successful."
+note: |
+  A function that started an OTel span and returns err without
+  span.RecordError / SetStatus leaves the span OK while the checkout
+  failed. Backends show a green span and a failed request with no join.
+
+  Fix: before returning, span.RecordError(err) and
+  span.SetStatus(codes.Error, err.Error()).
+
+  Confidence is medium: any .Start( in the enclosing function gates the
+  rule (no type info). Only the if consequence is inspected, so an else
+  that calls SetStatus(Ok) does not suppress a bare return err in then.
+  return err inside a nested func literal / goroutine is ignored. Non-OTel
+  Start methods and recording on a different span are ceiling misses or
+  FPs. Full spancheck needs TAR-19. See README 13.2.
+
+rule:
+  kind: if_statement
+  all:
+    - has:
+        stopBy: end
+        regex: 'err != nil'
+    - has:
+        field: consequence
+        has:
+          stopBy: end
+          kind: return_statement
+          regex: 'err'
+          not:
+            inside:
+              stopBy: end
+              kind: func_literal
+    - not:
+        has:
+          field: consequence
+          has:
+            stopBy: end
+            regex: '(RecordError|SetStatus|RecordException)'
+    - any:
+        - inside:
+            stopBy: end
+            kind: function_declaration
+            has:
+              stopBy: end
+              regex: '\.Start\('
+        - inside:
+            stopBy: end
+            kind: method_declaration
+            has:
+              stopBy: end
+              regex: '\.Start\('
+    - inside:
+        stopBy: end
+        kind: source_file
+        has:
+          stopBy: end
+          kind: import_spec
+          regex: 'go\.opentelemetry\.io/otel'

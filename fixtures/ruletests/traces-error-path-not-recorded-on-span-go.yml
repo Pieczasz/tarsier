@@ -1,0 +1,119 @@
+id: traces-error-path-not-recorded-on-span-go
+valid:
+  # Records on the span before returning.
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+        "go.opentelemetry.io/otel/codes"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            span.RecordError(err)
+            span.SetStatus(codes.Error, err.Error())
+            return err
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  # No span Start in the function - out of scope.
+  - |
+    package main
+    import "go.opentelemetry.io/otel"
+    func f() error {
+        _ = otel.Tracer("api")
+        if err := reserve(); err != nil {
+            return err
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  # No otel import.
+  - |
+    package main
+    func f() error {
+        ctx, span := tracer.Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            return err
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  # SetStatus(Ok) only in else must not silence a bare return err in then.
+  # (This case is invalid below; here the then path records correctly.)
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+        "go.opentelemetry.io/otel/codes"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            span.RecordError(err)
+            span.SetStatus(codes.Error, err.Error())
+            return err
+        } else {
+            span.SetStatus(codes.Ok, "")
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  # return err only inside a nested closure - outer path returns nil.
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            _ = func() error { return err }
+            return nil
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+invalid:
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            return err
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  # else SetStatus(Ok) must not suppress the then return err.
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel"
+        "go.opentelemetry.io/otel/codes"
+    )
+    func f(ctx context.Context) error {
+        ctx, span := otel.Tracer("api").Start(ctx, "checkout")
+        defer span.End()
+        if err := reserve(); err != nil {
+            return err
+        } else {
+            span.SetStatus(codes.Ok, "")
+        }
+        return nil
+    }
+    func reserve() error { return nil }

@@ -1,0 +1,23 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+
+processors:
+  memory_limiter:
+    check_interval: 0s
+    limit_mib: 512
+  batch:
+    timeout: 1s
+  attributes:
+    actions: []
+
+exporters:
+  debug:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, memory_limiter]
+      exporters: [debug]

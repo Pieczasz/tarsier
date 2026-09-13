@@ -1,0 +1,21 @@
+id: metrics-high-cardinality-label-java
+valid:
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, String s) { Counter.builder("ok").tag("status", s).register(r); } }
+  # Cardinality is free on traces.
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(Span span, String id) { span.setAttribute("user_id", id); } }
+  # No metrics library imported, so .tag/.label belong to something else.
+  - |
+    class M { void f(ChartBuilder b) { b.label("user_id"); } }
+  - |
+    class M { void f(QueryBuilder q, String id) { q.tag("session_id", id); } }
+invalid:
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, String id) { Counter.builder("o").tag("user_id", id).register(r); } }
+  - |
+    import io.prometheus.client.Counter;
+    class M { void f() { Counter.build().name("o").labelNames("email").register(); } }

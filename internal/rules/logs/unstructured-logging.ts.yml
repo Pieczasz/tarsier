@@ -1,0 +1,35 @@
+id: logs-unstructured-logging-ts
+language: typescript
+severity: info
+
+metadata:
+  rule: logs/unstructured-logging
+  requires: structured_logs
+  expectation_layer: "4"
+  confidence: medium
+
+message: "$CALL writes an unstructured log line, but this file already imports a structured logger."
+note: |
+  An unstructured line cannot be queried by field and carries no trace
+  correlation, so it is invisible to a LogQL join and useless during an
+  incident. Use the structured logger already imported here:
+
+    logger.error({ orderId, err }, 'order failed')
+
+rule:
+  kind: member_expression
+  pattern: $CALL
+  regex: '^console\.(log|info|warn|error|debug)$'
+  all:
+    - inside:
+        kind: call_expression
+
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_statement
+          has:
+            field: source
+            regex: '(pino|winston|bunyan|@opentelemetry/api-logs)'

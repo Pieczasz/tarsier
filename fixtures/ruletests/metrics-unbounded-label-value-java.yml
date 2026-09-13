@@ -1,0 +1,28 @@
+id: metrics-unbounded-label-value-java
+valid:
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r) { Counter.builder("ok").tag("status", "200").register(r); } }
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, String status) { Counter.builder("ok").tag("status", status).register(r); } }
+  # Formatting proves nothing about what is formatted, and an enum toString is bounded.
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, int c) { Counter.builder("r").tag("code", String.format("%d", c)).register(r); } }
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, Kind k) { Counter.builder("r").tag("kind", k.toString()).register(r); } }
+  # Not a metrics library.
+  - |
+    class M { void f(AuditEvent e, Exception x) { e.tag("error", x.getMessage()); } }
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(Span span, Exception e) { span.setAttribute("error", e.getMessage()); } }
+invalid:
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, Exception e) { Counter.builder("f").tag("error", e.getMessage()).register(r); } }
+  - |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r) { Counter.builder("i").tag("id", UUID.randomUUID().toString()).register(r); } }

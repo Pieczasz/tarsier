@@ -1,0 +1,63 @@
+id: metrics-unbounded-label-value-python
+snapshots:
+  ? |
+    failures.labels(traceback.format_exc()).inc()
+  : labels:
+    - source: traceback.format_exc()
+      style: primary
+      start: 16
+      end: 38
+    - source: failures.labels
+      style: secondary
+      start: 0
+      end: 15
+    - source: failures.labels(traceback.format_exc())
+      style: secondary
+      start: 0
+      end: 39
+    - source: (traceback.format_exc())
+      style: secondary
+      start: 15
+      end: 39
+  ? |
+    ids.labels(uuid.uuid4()).inc()
+  : labels:
+    - source: uuid.uuid4()
+      style: primary
+      start: 11
+      end: 23
+    - source: uuid.uuid4
+      style: secondary
+      start: 11
+      end: 21
+    - source: ids.labels
+      style: secondary
+      start: 0
+      end: 10
+    - source: ids.labels(uuid.uuid4())
+      style: secondary
+      start: 0
+      end: 24
+    - source: (uuid.uuid4())
+      style: secondary
+      start: 10
+      end: 24
+  ? |
+    reqs.labels(request.path).inc()
+  : labels:
+    - source: request.path
+      style: primary
+      start: 12
+      end: 24
+    - source: reqs.labels
+      style: secondary
+      start: 0
+      end: 11
+    - source: reqs.labels(request.path)
+      style: secondary
+      start: 0
+      end: 25
+    - source: (request.path)
+      style: secondary
+      start: 11
+      end: 25

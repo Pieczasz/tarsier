@@ -1,0 +1,50 @@
+id: msgtrace-kafka-consume-no-extract-go
+language: go
+severity: warning
+
+metadata:
+  rule: msgtrace/kafka-consume-no-extract
+  requires: trace_propagation
+  expectation_layer: "1"
+  confidence: high
+  spec_ref: semconv/messaging@1.44
+
+message: "Message consumed with no context extraction, so processing starts an orphan trace."
+note: |
+  Without extracting trace context from the message headers the consumer
+  cannot join the producer's trace and starts an orphan root span. The
+  checkout trace appears as two disconnected traces in your backend.
+
+  Fix per client:
+    segmentio/kafka-go: propagate from msg.Headers with the otel propagator after ReadMessage/FetchMessage
+    franz-go (kgo): extract from Record.Headers after PollFetches
+    Prefer a client interceptor (kotel, otelsarama) if you have one.
+
+  Ceiling: extraction in a different function or file is invisible to a
+  per-file rule, as is injection via a client hook. Any reference to
+  `.Headers` or a propagator `Extract` in the enclosing block counts as
+  handled, so a business-only headers read also silences the rule.
+  sarama channel-based consumption (ConsumeClaim / claim.Messages()) has no
+  call anchor and is out of scope - same class as the Rust gap.
+  Only single-argument reads match: the client read APIs take exactly the
+  context, so a multi-argument same-named call (a local wrapper, e.g.
+  crowdsec's s.ReadMessage(ctx, out)) is skipped. A wrapper called with
+  exactly (ctx) still matches - resolving it needs type information, which
+  is TAR-19 deep-tier work. See README 13.2 for the full list.
+
+rule:
+  kind: call_expression
+  all:
+    - has: {field: function, regex: '\.(ReadMessage|FetchMessage|PollFetches)$'}
+    - not:
+        has:
+          field: arguments
+          regex: ','
+    - not:
+        inside:
+          stopBy: end
+          kind: block
+          has:
+            stopBy: end
+            regex: '(\.Headers|Extract)'
+    - inside: {stopBy: end, matches: kafka-client-imported}

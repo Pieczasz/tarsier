@@ -1,0 +1,17 @@
+id: logs-unstructured-logging-ts
+valid:
+  # No structured logger imported, so nothing better to point at.
+  - |
+    console.log('usage: badshop --help');
+  - |
+    import pino from 'pino';
+    const logger = pino();
+    logger.error({ orderId }, 'order failed');
+invalid:
+  - |
+    import pino from 'pino';
+    const logger = pino();
+    console.log('order failed', orderId);
+  - |
+    import winston from 'winston';
+    console.error('order failed');

@@ -1,0 +1,35 @@
+id: metrics-high-cardinality-label-python
+valid:
+  - |
+    orders = Counter('orders_total', 'Orders.', ['status', 'region'])
+  # tenant_id is usually bounded and is often the label you want.
+  - |
+    tenant = Counter('tenant_total', 'Per tenant.', ['tenant_id'])
+  # A plain list of strings is not a metric label set.
+  - |
+    audit_fields = ['user_id', 'action']
+  # Cardinality is free on traces - span attributes must never be flagged.
+  - |
+    from opentelemetry import trace
+    trace.get_current_span().set_attribute("user_id", uid)
+  # The dict is the first argument, so this is not an instrument API.
+  - |
+    from opentelemetry import metrics
+    audit.record({"user_id": uid})
+  # No opentelemetry import, so `.add` belongs to somebody else.
+  - |
+    cache.add(1, {"user_id": uid})
+  # collections.Counter is not a metric.
+  - |
+    from collections import Counter
+    Counter(["user_id", "action"])
+invalid:
+  - |
+    from prometheus_client import Counter
+    orders = Counter('orders_total', 'Orders.', ['user_id', 'status'])
+  - |
+    from prometheus_client import Histogram
+    checkout = Histogram('checkout_seconds', 'Latency.', labelnames=['email'])
+  - |
+    from opentelemetry import metrics
+    counter.add(1, {"session_id": sid, "status": status})

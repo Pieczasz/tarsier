@@ -1,0 +1,29 @@
+id: errors-swallowed-on-critical-path-go
+snapshots:
+  ? |
+    package main
+    func f() {
+        if err := reserve(); err != nil {
+            _ = err
+        }
+    }
+    func reserve() error { return nil }
+  : labels:
+    - source: |-
+        if err := reserve(); err != nil {
+                _ = err
+            }
+      style: primary
+      start: 28
+      end: 83
+    - source: err != nil
+      style: secondary
+      start: 49
+      end: 59
+    - source: |-
+        {
+                _ = err
+            }
+      style: secondary
+      start: 60
+      end: 83

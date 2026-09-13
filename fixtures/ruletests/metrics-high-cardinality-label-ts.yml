@@ -1,0 +1,29 @@
+id: metrics-high-cardinality-label-ts
+valid:
+  - |
+    const good = new Counter({ name: 'orders_total', help: 'x', labelNames: ['status'] });
+  - |
+    const notAMetric = { fields: ['user_id'] };
+  # Cardinality is free on traces - span attributes must never be flagged.
+  - |
+    import { trace } from '@opentelemetry/api';
+    span.setAttributes({ user_id: id });
+  - |
+    otelHist.record(ms, { region: 'eu' });
+  # Guard 1: the object is the first argument, so this is not an instrument API.
+  # This exact shape cost 10 false positives on n8n.
+  - |
+    import { metrics } from '@opentelemetry/api';
+    audit.record({ user_id: 'alice' });
+  - |
+    import { metrics } from '@opentelemetry/api';
+    coverageReport.add([{ url: 'http://x' }]);
+  # Guard 2: no OpenTelemetry import, so `.record` is somebody else's method.
+  - |
+    modificationTelemetry.record(1, { user_id: context.user });
+invalid:
+  - |
+    const bad = new Counter({ name: 'orders_total', help: 'x', labelNames: ['user_id', 'status'] });
+  - |
+    import { metrics } from '@opentelemetry/api';
+    otelCounter.add(1, { user_id: id, status: 'ok' });

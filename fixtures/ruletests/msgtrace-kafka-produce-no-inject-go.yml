@@ -1,0 +1,127 @@
+id: msgtrace-kafka-produce-no-inject-go
+valid:
+  # Headers present - the correct shape.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, w *kafka.Writer) {
+        w.WriteMessages(ctx, kafka.Message{
+            Topic: "orders",
+            Value: []byte("ok"),
+            Headers: []kafka.Header{{Key: "traceparent", Value: []byte("00-abc-def-01")}},
+        })
+    }
+  # Literal into a var, injected in a sibling function - the otel-demo shape.
+  # otel-demo/src/checkout/main.go:659 builds a bare sarama.ProducerMessage and injects
+  # in createProducerSpan at line 738 via msg.Headers = append(...).
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func publish(ctx context.Context, w *kafka.Writer, orderID string) error {
+        msg := kafka.Message{Topic: "orders", Value: []byte(orderID)}
+        inject(msg)
+        return w.WriteMessages(ctx, msg)
+    }
+    func inject(m kafka.Message) { m.Headers = append(m.Headers, kafka.Header{Key: "traceparent", Value: []byte("x")}) }
+  # Bare &kgo.Record returned from a factory - the tempo/kotel shape.
+  # tempo/pkg/ingest/encoding.go:110 returns &kgo.Record{Key, Value, Partition}
+  # and injects via kotel client hook in writer_client.go:188.
+  - |
+    package main
+    import "github.com/twmb/franz-go/pkg/kgo"
+    func buildRecord(val []byte) *kgo.Record {
+        return &kgo.Record{Topic: "orders", Value: val}
+    }
+  # Headerless non-Kafka literal directly in the produce argument list, in a
+  # kafka-importing file - only the type gate saves it.
+  - |
+    package main
+    import (
+        "context"
+        "net/http"
+        "github.com/segmentio/kafka-go"
+    )
+    func f(ctx context.Context, w *kafka.Writer) {
+        w.WriteMessages(ctx, http.Request{Method: "GET"})
+    }
+  # Injector wraps the literal inline at the produce call - the ascent must stop
+  # at the nearest argument_list, not walk up to WriteMessages.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f2(ctx context.Context, w *kafka.Writer, v []byte) {
+        w.WriteMessages(ctx, withTrace(ctx, kafka.Message{Topic: "orders", Value: v}))
+    }
+  # Inner literal nested in the Headers value of a produced message - neither
+  # literal is a finding: the outer has Headers, the inner is not produced.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func f3(ctx context.Context, w *kafka.Writer, hdrs []kafka.Header) {
+        w.WriteMessages(ctx, kafka.Message{Topic: "orders", Headers: headersOf(kafka.Message{Topic: "x"})})
+    }
+  # Headerless kafka.Message inline at produce, but file without Kafka import - import gate saves it.
+  - |
+    package main
+    import "context"
+    func f(ctx context.Context, w *myWriter) {
+        w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: []byte("x")})
+    }
+    type myWriter struct{}
+    func (m *myWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) error { return nil }
+    type Message struct { Topic string; Value []byte }
+    var kafka = struct{ Message func() Message }{}
+
+invalid:
+  # segmentio - the _badshop shape: w.WriteMessages(ctx, kafka.Message{Topic, Value})
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func bad(ctx context.Context, w *kafka.Writer, orderID string) error {
+        return w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: []byte(orderID)})
+    }
+  # sarama - pointer literal: p.SendMessage(&sarama.ProducerMessage{Topic, Value})
+  - |
+    package main
+    import (
+        "github.com/IBM/sarama"
+    )
+    func bad2(p sarama.SyncProducer) {
+        p.SendMessage(&sarama.ProducerMessage{Topic: "orders", Value: sarama.StringEncoder("x")})
+    }
+  # franz-go - kgo.Record pointer: cl.ProduceSync(ctx, &kgo.Record{Topic, Value})
+  - |
+    package main
+    import (
+        "context"
+        "github.com/twmb/franz-go/pkg/kgo"
+    )
+    func bad3(ctx context.Context, cl *kgo.Client) {
+        cl.ProduceSync(ctx, &kgo.Record{Topic: "orders", Value: []byte("x")})
+    }
+  # A Headers key in an unrelated nested struct must not suppress the finding -
+  # the exclusion looks only at the message literal's own keyed elements.
+  - |
+    package main
+    import (
+        "context"
+        "github.com/segmentio/kafka-go"
+    )
+    func bad4(ctx context.Context, w *kafka.Writer) error {
+        return w.WriteMessages(ctx, kafka.Message{Topic: "orders", Value: encode(envelope{Headers: nil})})
+    }

@@ -1,0 +1,98 @@
+id: httpctx-outbound-call-without-context-go
+snapshots:
+  ? |
+    package main
+    import "net/http"
+    func f(url string) { http.Get(url) }
+  : labels:
+    - source: http.Get(url)
+      style: primary
+      start: 52
+      end: 65
+    - source: http.Get
+      style: secondary
+      start: 52
+      end: 60
+    - source: '"net/http"'
+      style: secondary
+      start: 20
+      end: 30
+    - source: |
+        package main
+        import "net/http"
+        func f(url string) { http.Get(url) }
+      style: secondary
+      start: 0
+      end: 68
+  ? |
+    package main
+    import "net/http"
+    func f(url string) { http.Head(url) }
+  : labels:
+    - source: http.Head(url)
+      style: primary
+      start: 52
+      end: 66
+    - source: http.Head
+      style: secondary
+      start: 52
+      end: 61
+    - source: '"net/http"'
+      style: secondary
+      start: 20
+      end: 30
+    - source: |
+        package main
+        import "net/http"
+        func f(url string) { http.Head(url) }
+      style: secondary
+      start: 0
+      end: 69
+  ? |
+    package main
+    import "net/http"
+    func f(url string) { http.PostForm(url, nil) }
+  : labels:
+    - source: http.PostForm(url, nil)
+      style: primary
+      start: 52
+      end: 75
+    - source: http.PostForm
+      style: secondary
+      start: 52
+      end: 65
+    - source: '"net/http"'
+      style: secondary
+      start: 20
+      end: 30
+    - source: |
+        package main
+        import "net/http"
+        func f(url string) { http.PostForm(url, nil) }
+      style: secondary
+      start: 0
+      end: 78
+  ? |
+    package main
+    import "net/http"
+    func f(url, body string) { http.Post(url, "text/plain", nil) }
+  : labels:
+    - source: http.Post(url, "text/plain", nil)
+      style: primary
+      start: 58
+      end: 91
+    - source: http.Post
+      style: secondary
+      start: 58
+      end: 67
+    - source: '"net/http"'
+      style: secondary
+      start: 20
+      end: 30
+    - source: |
+        package main
+        import "net/http"
+        func f(url, body string) { http.Post(url, "text/plain", nil) }
+      style: secondary
+      start: 0
+      end: 94

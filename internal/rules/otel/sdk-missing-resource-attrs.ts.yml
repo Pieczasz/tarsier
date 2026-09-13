@@ -1,0 +1,54 @@
+id: otel-sdk-missing-resource-attrs-ts
+language: typescript
+severity: warning
+
+metadata:
+  rule: otel/sdk-missing-resource-attrs
+  requires: resource
+  expectation_layer: "2"
+  confidence: medium
+  spec_ref: instrumentation-score/RES-001
+
+message: "NodeSDK is constructed without service.name, so backends cannot attribute this process."
+note: |
+  Instrumentation Score RES-001 is Critical: every process must set
+  service.name. A bare new NodeSDK({}) relies on resource detectors that
+  often resolve to "unknown_service" in a container.
+
+  Fix: pass resourceFromAttributes({ [ATTR_SERVICE_NAME]: "web" }) or set
+  OTEL_SERVICE_NAME and a detector that reads it.
+
+  Confidence is medium: @opentelemetry/auto-instrumentations-node and
+  env detectors can set service.name with no constructor argument. Same-file
+  import of auto-instrumentations-node suppresses. Other-file registration
+  is invisible. See README 13.2.
+
+rule:
+  kind: new_expression
+  all:
+    - has:
+        field: constructor
+        regex: 'NodeSDK'
+    - not:
+        has:
+          stopBy: end
+          regex: '(service\.name|ATTR_SERVICE_NAME|serviceName|OTEL_SERVICE_NAME)'
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_statement
+          has:
+            field: source
+            regex: '@opentelemetry/sdk-node'
+    - not:
+        inside:
+          stopBy: end
+          kind: program
+          has:
+            stopBy: end
+            kind: import_statement
+            has:
+              field: source
+              regex: '@opentelemetry/auto-instrumentations-node'

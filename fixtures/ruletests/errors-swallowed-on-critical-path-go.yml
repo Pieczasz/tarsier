@@ -1,0 +1,31 @@
+id: errors-swallowed-on-critical-path-go
+valid:
+  # Error is returned - the correct shape.
+  - |
+    package main
+    func f() error {
+        if err := reserve(); err != nil {
+            return err
+        }
+        return nil
+    }
+    func reserve() error { return nil }
+  # Logged rather than assigned to _.
+  - |
+    package main
+    import "log"
+    func f() {
+        if err := reserve(); err != nil {
+            log.Println(err)
+        }
+    }
+    func reserve() error { return nil }
+invalid:
+  - |
+    package main
+    func f() {
+        if err := reserve(); err != nil {
+            _ = err
+        }
+    }
+    func reserve() error { return nil }

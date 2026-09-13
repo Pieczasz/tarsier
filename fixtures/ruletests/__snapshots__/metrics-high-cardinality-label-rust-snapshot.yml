@@ -1,0 +1,44 @@
+id: metrics-high-cardinality-label-rust
+snapshots:
+  ? |
+    fn f() { let c = CounterVec::new(opts, &["email"]).unwrap(); }
+  : labels:
+    - source: '"email"'
+      style: primary
+      start: 41
+      end: 48
+    - source: CounterVec::new
+      style: secondary
+      start: 17
+      end: 32
+    - source: CounterVec::new(opts, &["email"])
+      style: secondary
+      start: 17
+      end: 50
+    - source: '["email"]'
+      style: secondary
+      start: 40
+      end: 49
+  ? |
+    fn f() { let c = register_counter_vec!("orders_total", "Orders.", &["user_id", "status"]).unwrap(); }
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 68
+      end: 77
+    - source: register_counter_vec
+      style: secondary
+      start: 17
+      end: 37
+    - source: register_counter_vec!("orders_total", "Orders.", &["user_id", "status"])
+      style: secondary
+      start: 17
+      end: 89
+    - source: ("orders_total", "Orders.", &["user_id", "status"])
+      style: secondary
+      start: 38
+      end: 89
+    - source: '["user_id", "status"]'
+      style: secondary
+      start: 67
+      end: 88

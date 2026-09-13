@@ -1,0 +1,100 @@
+id: metrics-high-cardinality-label-java
+snapshots:
+  ? |
+    class M { void f() { Counter.build().name("orders_total").labelNames("email").register(); } }
+  : labels:
+    - source: '"email"'
+      style: primary
+      start: 69
+      end: 76
+    - source: labelNames
+      style: secondary
+      start: 58
+      end: 68
+    - source: Counter.build().name("orders_total").labelNames("email")
+      style: secondary
+      start: 21
+      end: 77
+    - source: ("email")
+      style: secondary
+      start: 68
+      end: 77
+  ? |
+    class M { void f(MeterRegistry reg, String id) { Counter.builder("orders_total").tag("user_id", id).register(reg); } }
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 85
+      end: 94
+    - source: tag
+      style: secondary
+      start: 81
+      end: 84
+    - source: Counter.builder("orders_total").tag("user_id", id)
+      style: secondary
+      start: 49
+      end: 99
+    - source: ("user_id", id)
+      style: secondary
+      start: 84
+      end: 99
+  ? |
+    import io.micrometer.core.instrument.Counter;
+    class M { void f(MeterRegistry r, String id) { Counter.builder("o").tag("user_id", id).register(r); } }
+  : labels:
+    - source: '"user_id"'
+      style: primary
+      start: 118
+      end: 127
+    - source: tag
+      style: secondary
+      start: 114
+      end: 117
+    - source: Counter.builder("o").tag("user_id", id)
+      style: secondary
+      start: 93
+      end: 132
+    - source: ("user_id", id)
+      style: secondary
+      start: 117
+      end: 132
+    - source: import io.micrometer.core.instrument.Counter;
+      style: secondary
+      start: 0
+      end: 45
+    - source: |
+        import io.micrometer.core.instrument.Counter;
+        class M { void f(MeterRegistry r, String id) { Counter.builder("o").tag("user_id", id).register(r); } }
+      style: secondary
+      start: 0
+      end: 150
+  ? |
+    import io.prometheus.client.Counter;
+    class M { void f() { Counter.build().name("o").labelNames("email").register(); } }
+  : labels:
+    - source: '"email"'
+      style: primary
+      start: 95
+      end: 102
+    - source: labelNames
+      style: secondary
+      start: 84
+      end: 94
+    - source: Counter.build().name("o").labelNames("email")
+      style: secondary
+      start: 58
+      end: 103
+    - source: ("email")
+      style: secondary
+      start: 94
+      end: 103
+    - source: import io.prometheus.client.Counter;
+      style: secondary
+      start: 0
+      end: 36
+    - source: |
+        import io.prometheus.client.Counter;
+        class M { void f() { Counter.build().name("o").labelNames("email").register(); } }
+      style: secondary
+      start: 0
+      end: 120

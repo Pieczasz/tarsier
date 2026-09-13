@@ -1,0 +1,25 @@
+id: otel-sdk-missing-shutdown-go
+valid:
+  - |
+    package main
+    import (
+      "context"
+      sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    )
+    func f(ctx context.Context) {
+      tp := sdktrace.NewTracerProvider()
+      defer tp.Shutdown(ctx)
+    }
+  - |
+    package main
+    func f() { NewTracerProvider() }
+invalid:
+  - |
+    package main
+    import (
+      "context"
+      sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    )
+    func f(ctx context.Context) {
+      _ = sdktrace.NewTracerProvider()
+    }

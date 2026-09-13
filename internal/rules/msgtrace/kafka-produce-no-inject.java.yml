@@ -1,0 +1,68 @@
+id: msgtrace-kafka-produce-no-inject-java
+language: java
+severity: warning
+
+metadata:
+  rule: msgtrace/kafka-produce-no-inject
+  requires: trace_propagation
+  expectation_layer: "1"
+  confidence: medium
+  spec_ref: semconv/messaging@1.44
+
+message: "Message published with no headers, so consumers start orphan traces."
+note: |
+  Without trace context in the message headers the consumer cannot join the
+  producer's trace and starts an orphan root span. The checkout trace appears
+  as two disconnected traces in your backend.
+
+  Fix: pass headers on the ProducerRecord (W3C traceparent / the OTel
+  propagator inject) or use the OTel Java agent / spring-kafka Observation,
+  which inject at runtime with no source change.
+
+  Confidence is medium: the Java agent and Spring Observation make a
+  headerless ProducerRecord byte-for-byte identical to a correctly
+  propagating one. This finding never gates a PR. Same-file imports of
+  io.opentelemetry.instrumentation.kafka* / kafkaclients or
+  org.springframework.kafka.support.micrometer suppress the finding;
+  the agent itself is invisible. Business-only headers (thingsboard
+  TbKafkaNode metadata copy) also silence it. Build-then-send is a miss,
+  same ceiling as Go. See README 13.2.
+
+rule:
+  kind: object_creation_expression
+  all:
+    - has:
+        field: type
+        regex: 'ProducerRecord'
+    - not:
+        has:
+          stopBy: end
+          kind: identifier
+          regex: '^[Hh]eaders$'
+    - not:
+        has:
+          stopBy: end
+          regex: 'Header'
+    - inside:
+        stopBy: end
+        kind: argument_list
+        inside:
+          kind: method_invocation
+          has:
+            field: name
+            regex: '^(send|sendDefault)$'
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_declaration
+          regex: 'org\.apache\.kafka'
+    - not:
+        inside:
+          stopBy: end
+          kind: program
+          has:
+            stopBy: end
+            kind: import_declaration
+            regex: '(io\.opentelemetry\.instrumentation\.kafka|org\.springframework\.kafka\.support\.micrometer|brave\.kafka)'

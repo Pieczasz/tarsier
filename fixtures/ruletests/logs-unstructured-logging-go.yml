@@ -1,0 +1,49 @@
+id: logs-unstructured-logging-go
+valid:
+  # No structured logger in this file, so there is no better option to point at.
+  - |
+    package main
+    import "log"
+    func f() { log.Printf("order %s failed", id) }
+  # Already structured.
+  - |
+    package main
+    import "log/slog"
+    func f() { slog.Error("order failed", "order_id", id) }
+  # fmt.Print* is how a CLI writes its output. Only an error makes it logging.
+  - |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func main() { slog.Info("starting"); fmt.Println(renderTable(rows)) }
+  - |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func f() { fmt.Println("order failed", id) }
+invalid:
+  - |
+    package main
+    import (
+        "log"
+        "log/slog"
+    )
+    func f() { log.Printf("order %s failed", id) }
+  - |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func f() { if err != nil { fmt.Println(err) } }
+  - |
+    package main
+    import (
+        "fmt"
+        "log/slog"
+    )
+    func f() { fmt.Printf("failed: %s", err.Error()) }

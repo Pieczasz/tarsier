@@ -1,0 +1,6 @@
+# TODO: grow this list from corpus evidence, not from imagination. A label only
+# earns a place here once it has been seen unbounded in real code.
+id: is-unbounded-label
+language: go
+rule:
+  regex: '^[''"]?(user_id|userid|email|uuid|request_id|session_id|trace_id|span_id|order_id|ip|ip_address|url|token)[''"]?$'

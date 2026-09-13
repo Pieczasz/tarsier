@@ -1,0 +1,37 @@
+id: otel-sdk-missing-resource-attrs-go
+valid:
+  # ServiceName in the call - the correct shape.
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel/sdk/resource"
+        semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+    )
+    func f(ctx context.Context) {
+        resource.New(ctx, resource.WithAttributes(semconv.ServiceName("api")))
+    }
+  # WithFromEnv reads OTEL_SERVICE_NAME - treated as set.
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel/sdk/resource"
+    )
+    func f(ctx context.Context) {
+        resource.New(ctx, resource.WithFromEnv())
+    }
+  # No otel resource import - a different package named resource.
+  - |
+    package main
+    func f() { resource.New(ctx) }
+invalid:
+  - |
+    package main
+    import (
+        "context"
+        "go.opentelemetry.io/otel/sdk/resource"
+    )
+    func f(ctx context.Context) {
+        resource.New(ctx)
+    }

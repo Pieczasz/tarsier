@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tarsier scan{{if .Root}} - {{.Root}}{{end}}</title>
+<style>
+:root {
+  --bg: #f7f5f0;
+  --card: #fff;
+  --ink: #1c1917;
+  --muted: #57534e;
+  --line: #e7e5e4;
+  --warn: #b45309;
+  --error: #b91c1c;
+  --ok: #166534;
+  --chip: #e7e5e4;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 15px/1.45 ui-sans-serif, system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+main { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 24px; }
+.cards { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 120px;
+}
+.card .n { font-size: 1.6rem; font-weight: 650; }
+.card .l { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; }
+.note {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 28px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+h2 { font-size: 1.1rem; margin: 28px 0 8px; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); }
+th, td { text-align: left; padding: 8px 10px; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+tr.suppressed td { color: var(--muted); }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85em; }
+.sev-warning { color: var(--warn); font-weight: 600; }
+.sev-error { color: var(--error); font-weight: 600; }
+.chip {
+  display: inline-block;
+  background: var(--chip);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  margin-right: 4px;
+}
+details { margin-top: 6px; color: var(--muted); }
+details pre {
+  white-space: pre-wrap;
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+.empty { color: var(--ok); }
+</style>
+</head>
+<body>
+<main>
+  <h1>tarsier scan</h1>
+  <p class="sub">{{if .Root}}{{.Root}} · {{end}}{{.Generated}} UTC</p>
+  <div class="cards">
+    <div class="card"><div class="n">{{.Open}}</div><div class="l">open findings</div></div>
+    <div class="card"><div class="n">{{.Suppressed}}</div><div class="l">suppressed</div></div>
+    <div class="card"><div class="n">{{len .Rules}}</div><div class="l">rules hit</div></div>
+  </div>
+  <p class="note">
+    This is a <strong>static</strong> scan: file:line evidence from the rule pack.
+    It is not an Instrumentation Score (that needs runtime OTLP).
+    AI does not originate these findings; it can only explain them.
+  </p>
+  {{if not .Rules}}
+  <p class="empty">No findings.</p>
+  {{end}}
+  {{range .Languages}}<span class="chip">{{.Name}} {{.Count}}</span>{{end}}
+  {{range .Severities}}<span class="chip">{{.Name}} {{.Count}}</span>{{end}}
+  {{range .Rules}}
+  <h2><code>{{.Rule}}</code> <span class="chip">{{.Count}}</span></h2>
+  <table>
+    <thead><tr><th>where</th><th>severity</th><th>finding</th></tr></thead>
+    <tbody>
+    {{range .Findings}}
+    <tr class="{{if .Suppressed}}suppressed{{end}}">
+      <td class="mono">{{.File}}:{{.Line}}</td>
+      <td class="sev-{{.Severity}}">{{.Severity}}{{if .Suppressed}} (suppressed){{end}}</td>
+      <td>
+        {{.Message}}
+        {{if .Confidence}}<span class="chip">{{.Confidence}}</span>{{end}}
+        {{if .Layer}}<span class="chip">layer {{.Layer}}</span>{{end}}
+        {{if .Language}}<span class="chip">{{.Language}}</span>{{end}}
+        {{if or .Note .Matched .SpecRef}}
+        <details>
+          <summary>note and evidence</summary>
+          {{if .SpecRef}}<p class="mono">{{.SpecRef}}</p>{{end}}
+          {{if .Matched}}<p>matched: <code>{{.Matched}}</code></p>{{end}}
+          {{if .Note}}<pre>{{.Note}}</pre>{{end}}
+        </details>
+        {{end}}
+      </td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{end}}
+</main>
+</body>
+</html>

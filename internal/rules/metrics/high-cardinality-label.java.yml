@@ -1,0 +1,41 @@
+id: metrics-high-cardinality-label-java
+language: java
+severity: warning
+
+metadata:
+  rule: metrics/high-cardinality-label
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label $LABEL is unbounded; each distinct value mints a new billable time series."
+note: |
+  Unbounded labels are the single largest driver of observability cost.
+  Drop the label, or replace it with a bounded dimension (status, route,
+  region). If you need per-user detail, put it on a span or an exemplar -
+  high cardinality is free on traces and ruinous on metrics.
+
+rule:
+  kind: string_literal
+  pattern: $LABEL
+  matches: is-unbounded-label
+  all:
+    - inside:
+        kind: argument_list
+        inside:
+          kind: method_invocation
+          has:
+            field: name
+            pattern: $METHOD
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_declaration
+          regex: '(io\.micrometer|io\.prometheus|opentelemetry)'
+
+constraints:
+  METHOD:
+    regex: '^(tag|tags|labelNames|label|withTag)$'

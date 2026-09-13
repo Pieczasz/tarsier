@@ -1,0 +1,38 @@
+id: httpctx-outbound-call-without-context-go
+language: go
+severity: warning
+
+metadata:
+  rule: httpctx/outbound-call-without-context
+  requires: trace
+  expectation_layer: "1"
+  confidence: high
+  spec_ref: semconv/http@1.23
+
+message: "Outbound HTTP call uses the Context-free client, so the trace dies here."
+note: |
+  http.Get, http.Post, http.Head and http.PostForm always use
+  context.Background(). Deadlines, cancellation, and the current span never
+  reach the next service, so the trace ends at this call.
+
+  Fix: http.NewRequestWithContext(ctx, ...) then client.Do(req), or
+  otelhttp.NewTransport on the client.
+
+  Ceiling: an aliased net/http import (h.Get) is a miss - the selector must
+  be the unaliased package name. Methods on a named *http.Client (c.Get)
+  need type information (TAR-19). Custom wrappers that reimplement Get are
+  out of scope. See README 13.2.
+
+rule:
+  kind: call_expression
+  all:
+    - has:
+        field: function
+        regex: '^http\.(Get|Post|Head|PostForm)$'
+    - inside:
+        stopBy: end
+        kind: source_file
+        has:
+          stopBy: end
+          kind: import_spec
+          regex: 'net/http'

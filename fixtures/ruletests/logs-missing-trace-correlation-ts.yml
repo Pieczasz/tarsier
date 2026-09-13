@@ -1,0 +1,15 @@
+id: logs-missing-trace-correlation-ts
+valid:
+  - |
+    import pino from 'pino';
+    const log = pino();
+  - |
+    import pino from 'pino';
+    import '@opentelemetry/api';
+    import '@opentelemetry/instrumentation-pino';
+    const log = pino();
+invalid:
+  - |
+    import pino from 'pino';
+    import '@opentelemetry/api';
+    const log = pino();

@@ -1,0 +1,81 @@
+id: metrics-high-cardinality-label-python
+language: python
+severity: warning
+
+metadata:
+  rule: metrics/high-cardinality-label
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label $LABEL is unbounded; each distinct value mints a new billable time series."
+note: |
+  Unbounded labels are the single largest driver of observability cost.
+  Drop the label, or replace it with a bounded dimension (status, route,
+  region). If you need per-user detail, put it on a span or an exemplar -
+  high cardinality is free on traces and ruinous on metrics.
+
+  Python's prometheus_client has no exemplar support, so the span is the only
+  place per-request detail belongs.
+
+rule:
+  any:
+    - all:
+        - kind: string
+          pattern: $LABEL
+          matches: is-unbounded-label
+        - inside:
+            stopBy: end
+            kind: list
+            inside:
+              stopBy: end
+              kind: argument_list
+              inside:
+                kind: call
+                has:
+                  field: function
+                  pattern: $CTOR
+        - inside:
+            stopBy: end
+            kind: module
+            has:
+              stopBy: end
+              any:
+                - kind: import_statement
+                - kind: import_from_statement
+              has:
+                stopBy: end
+                kind: dotted_name
+                regex: 'prometheus_client'
+
+    - all:
+        - kind: string
+          pattern: $LABEL
+          matches: is-unbounded-label
+        - inside:
+            kind: pair
+            inside:
+              kind: dictionary
+              inside:
+                kind: argument_list
+                inside:
+                  pattern: $METER.$METHOD($VALUE, $ATTRS)
+        - inside:
+            stopBy: end
+            kind: module
+            has:
+              stopBy: end
+              any:
+                - kind: import_statement
+                - kind: import_from_statement
+              has:
+                stopBy: end
+                kind: dotted_name
+                regex: 'opentelemetry'
+
+constraints:
+  CTOR:
+    regex: '(^|\.)(Counter|Gauge|Histogram|Summary)$'
+  METHOD:
+    regex: '^(add|record)$'

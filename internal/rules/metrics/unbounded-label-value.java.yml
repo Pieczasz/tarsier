@@ -1,0 +1,48 @@
+id: metrics-unbounded-label-value-java
+language: java
+severity: warning
+
+metadata:
+  rule: metrics/unbounded-label-value
+  requires: bounded_cardinality
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: instrumentation-score/MET-001
+
+message: "Metric label value $VAL is unbounded."
+note: |
+  A tag with an innocent name still mints a meter per request when its value
+  is unbounded:
+
+    Counter.builder("orders_failed_total").tag("error", e.getMessage())
+
+  Micrometer will happily create a meter per distinct tag value. Bucket the
+  value first - an exception *class* rather than its message, a route template
+  rather than a path - and put the full detail on a span, where cardinality is
+  free.
+
+rule:
+  any:
+    - all:
+        - pattern: $E.getMessage()
+        - pattern: $VAL
+    - all:
+        - pattern: UUID.randomUUID().toString()
+        - pattern: $VAL
+
+  all:
+    - inside:
+        stopBy: end
+        kind: argument_list
+        inside:
+          kind: method_invocation
+          has:
+            field: name
+            regex: '^(tag|tags|labelValues|withTag)$'
+    - inside:
+        stopBy: end
+        kind: program
+        has:
+          stopBy: end
+          kind: import_declaration
+          regex: '(io\.micrometer|io\.prometheus|opentelemetry)'
