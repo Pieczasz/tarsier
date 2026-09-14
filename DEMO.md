@@ -51,7 +51,6 @@ make build
 
 - Runs on a git checkout; no Tempo/Prometheus credentials required.
 - High-confidence rules are for gates; medium is advisory.
-- Skills under `skills/` only shell this binary — agents do not invent findings.
 
 ## Soft-feedback checklist
 

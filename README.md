@@ -55,8 +55,6 @@ Quiet one finding in source (reason required):
 
 Example workflow: [`examples/github-actions/scan.yml`](examples/github-actions/scan.yml).
 
-Agents: copy [`skills/tarsier-scan/SKILL.md`](skills/tarsier-scan/SKILL.md) or
-[`skills/cardinality-check/SKILL.md`](skills/cardinality-check/SKILL.md) into
 your Cursor/Claude skills. Skills only run this CLI; they do not invent findings.
 
 ## What it detects
