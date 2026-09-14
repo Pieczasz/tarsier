@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Pieczasz/tarsier/internal/engine/resolve"
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/engine/resolve"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 const (

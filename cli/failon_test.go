@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 func TestFailOnRank(t *testing.T) {

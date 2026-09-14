@@ -12,11 +12,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	enggolang "github.com/Pieczasz/tarsier/internal/engine/golang"
-	"github.com/Pieczasz/tarsier/internal/engine/pattern"
-	"github.com/Pieczasz/tarsier/internal/finding"
-	"github.com/Pieczasz/tarsier/internal/report"
-	"github.com/Pieczasz/tarsier/internal/rules"
+	enggolang "github.com/Pieczasz/tarsier/engine/golang"
+	"github.com/Pieczasz/tarsier/engine/pattern"
+	"github.com/Pieczasz/tarsier/finding"
+	"github.com/Pieczasz/tarsier/report"
+	"github.com/Pieczasz/tarsier/rules"
 )
 
 const (

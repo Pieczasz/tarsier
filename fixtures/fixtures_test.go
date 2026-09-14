@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Pieczasz/tarsier/internal/engine/pattern"
-	"github.com/Pieczasz/tarsier/internal/rules"
+	"github.com/Pieczasz/tarsier/engine/pattern"
+	"github.com/Pieczasz/tarsier/rules"
 )
 
 const fixtureRoot = "_badshop"

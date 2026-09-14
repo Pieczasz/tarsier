@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 func TestScanInterpretsExitCodes(t *testing.T) {
@@ -463,7 +463,7 @@ func realRunner(t *testing.T) *Runner {
 		}
 		t.Skip("ast-grep not on PATH; `brew install ast-grep` to run driver tests")
 	}
-	config, err := filepath.Abs(filepath.Join("..", "..", "..", "sgconfig.yml"))
+	config, err := filepath.Abs(filepath.Join("..", "..", "sgconfig.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}

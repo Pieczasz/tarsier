@@ -9,7 +9,7 @@ import (
 )
 
 // The denylist of unbounded label names lives once, in
-// internal/ruleutils/unbounded-label.yml, reached via `matches:`.
+// ruleutils/unbounded-label.yml, reached via `matches:`.
 //
 // A rule that inlined its own copy would still pass its own fixtures, because
 // each language's fixtures only exercise its own copy, so a drifted list would

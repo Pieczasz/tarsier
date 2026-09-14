@@ -12,9 +12,9 @@ import (
 	"golang.org/x/tools/go/analysis/checker"
 	"golang.org/x/tools/go/packages"
 
-	"github.com/Pieczasz/tarsier/internal/analyzers/msgtrace"
-	"github.com/Pieczasz/tarsier/internal/analyzers/otelresource"
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/analyzers/msgtrace"
+	"github.com/Pieczasz/tarsier/analyzers/otelresource"
+	"github.com/Pieczasz/tarsier/finding"
 
 	"github.com/jjti/go-spancheck"
 	"github.com/kisielk/errcheck/errcheck"

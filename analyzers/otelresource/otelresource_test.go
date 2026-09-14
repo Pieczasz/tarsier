@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/tools/go/analysis/analysistest"
 
-	"github.com/Pieczasz/tarsier/internal/analyzers/otelresource"
+	"github.com/Pieczasz/tarsier/analyzers/otelresource"
 )
 
 func TestAnalyzer(t *testing.T) {

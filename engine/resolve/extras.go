@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Pieczasz/tarsier/internal/ruleutils"
+	"github.com/Pieczasz/tarsier/ruleutils"
 )
 
 // Pattern, not a category list, so a new rule directory ships without an

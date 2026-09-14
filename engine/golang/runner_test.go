@@ -10,8 +10,8 @@ import (
 	"golang.org/x/tools/go/analysis/checker"
 	"golang.org/x/tools/go/packages"
 
-	"github.com/Pieczasz/tarsier/internal/analyzers/msgtrace"
-	"github.com/Pieczasz/tarsier/internal/analyzers/otelresource"
+	"github.com/Pieczasz/tarsier/analyzers/msgtrace"
+	"github.com/Pieczasz/tarsier/analyzers/otelresource"
 )
 
 func TestScanMsgtraceWrapperFollow(t *testing.T) {
@@ -207,7 +207,7 @@ func godeepDir(t *testing.T) string {
 	if !ok {
 		t.Fatal("no caller")
 	}
-	dir := filepath.Join(filepath.Dir(file), "..", "..", "..", "fixtures", "godeep")
+	dir := filepath.Join(filepath.Dir(file), "..", "..", "fixtures", "godeep")
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		t.Fatal(err)

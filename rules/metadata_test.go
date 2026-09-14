@@ -109,7 +109,7 @@ func TestEveryRuleHasTestCases(t *testing.T) {
 			category, ruleName, suffix := splitRulePath(t, path)
 			id := category + "-" + ruleName + "-" + suffix
 
-			cases := filepath.Join("..", "..", "fixtures", "ruletests", id+".yml")
+			cases := filepath.Join("..", "fixtures", "ruletests", id+".yml")
 			if _, err := os.Stat(cases); err != nil {
 				t.Errorf("no test cases at %s: every rule needs valid/invalid snippets before it ships", cases)
 			}

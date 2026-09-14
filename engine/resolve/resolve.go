@@ -95,7 +95,7 @@ func (f *File) HasImport(substr string) bool {
 	return false
 }
 
-// UnboundedLabel mirrors internal/ruleutils/unbounded-label.yml.
+// UnboundedLabel mirrors ruleutils/unbounded-label.yml.
 func UnboundedLabel(s string) bool {
 	s = strings.Trim(s, `"'`)
 	switch strings.ToLower(s) {

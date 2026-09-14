@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 func TestRender(t *testing.T) {

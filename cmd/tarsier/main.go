@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Pieczasz/tarsier/internal/cli"
+	"github.com/Pieczasz/tarsier/cli"
 )
 
 func main() {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 //go:embed report.html

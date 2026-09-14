@@ -91,3 +91,10 @@ See [`DEMO.md`](DEMO.md) for a five-minute walkthrough.
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+## Library imports
+
+Shared packages live at the module root (not under `internal/`) so product
+code can `require github.com/Pieczasz/tarsier` and import e.g.
+`github.com/Pieczasz/tarsier/finding`, `…/engine/pattern`, `…/rules`.
+

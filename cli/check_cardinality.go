@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Pieczasz/tarsier/internal/engine/pattern"
-	"github.com/Pieczasz/tarsier/internal/finding"
-	"github.com/Pieczasz/tarsier/internal/rules"
+	"github.com/Pieczasz/tarsier/engine/pattern"
+	"github.com/Pieczasz/tarsier/finding"
+	"github.com/Pieczasz/tarsier/rules"
 )
 
 // Free CLI slice for the cardinality-check skill (TAR-23).

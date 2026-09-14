@@ -1,8 +1,8 @@
 ruleDirs:
-  - internal/rules
+  - rules
 
 utilDirs:
-  - internal/ruleutils
+  - ruleutils
 
 testConfigs:
   - testDir: fixtures/ruletests

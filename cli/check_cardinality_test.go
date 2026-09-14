@@ -10,13 +10,13 @@ import (
 )
 
 func TestCheckCardinalityFiltersRules(t *testing.T) {
-	if _, err := os.Stat(filepath.Join("..", "..", "fixtures", "_badshop")); err != nil {
+	if _, err := os.Stat(filepath.Join("..", "fixtures", "_badshop")); err != nil {
 		t.Skip("fixtures not available")
 	}
 	root := NewRootCommand()
 	buf := &bytes.Buffer{}
 	root.SetOut(buf)
-	root.SetArgs([]string{"check-cardinality", filepath.Join("..", "..", "fixtures", "_badshop")})
+	root.SetArgs([]string{"check-cardinality", filepath.Join("..", "fixtures", "_badshop")})
 	if err := root.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}

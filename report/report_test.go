@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Pieczasz/tarsier/internal/finding"
+	"github.com/Pieczasz/tarsier/finding"
 )
 
 func TestWriteHTMLGroupsByRuleAndEscapes(t *testing.T) {
