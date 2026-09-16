@@ -2,6 +2,7 @@ package pattern
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -492,8 +493,28 @@ cat %q >&2
 exit %d
 `, version, outFile, errFile, exitCode)
 
-	bin := filepath.Join(dir, "ast-grep")
-	if err := os.WriteFile(bin, []byte(script), 0o700); err != nil {
+	return writeExecScript(t, dir, "ast-grep", script)
+}
+
+func fakeAstGrepVersionOnly(t *testing.T, versionLine string) string {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("fake binary is a POSIX shell script")
+	}
+	dir := t.TempDir()
+	return writeExecScript(t, dir, "ast-grep", fmt.Sprintf("#!/bin/sh\necho %q\n", versionLine))
+}
+
+// writeExecScript writes a shell script via rename so exec never races a
+// still-open writer (ETXTBSY on overlayfs).
+func writeExecScript(t *testing.T, dir, name, script string) string {
+	t.Helper()
+	tmp := filepath.Join(dir, name+".tmp")
+	bin := filepath.Join(dir, name)
+	if err := os.WriteFile(tmp, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(tmp, bin); err != nil {
 		t.Fatal(err)
 	}
 	return bin
@@ -517,5 +538,116 @@ func TestFingerprintsSurviveAnInsertionAbove(t *testing.T) {
 	}
 	if before[0].Fingerprint != after[0].Fingerprint {
 		t.Error("fingerprint changed after an unrelated match was added above")
+	}
+}
+
+func TestTruncateBase(t *testing.T) {
+	t.Parallel()
+
+	if got := truncateBase("short"); got != "short" {
+		t.Fatalf("got %q", got)
+	}
+	multi := "line one\nline two\nline three"
+	if got := truncateBase(multi); strings.Contains(got, "\n") {
+		t.Fatalf("want flattened, got %q", got)
+	}
+	long := strings.Repeat("字", maxSymbolLen+10)
+	got := truncateBase(long)
+	if n := len([]rune(got)); n != maxSymbolLen {
+		t.Fatalf("len=%d want %d (%q)", n, maxSymbolLen, got)
+	}
+	if !strings.HasSuffix(got, "…") {
+		t.Fatalf("want ellipsis, got %q", got)
+	}
+}
+
+func TestRelPathEdges(t *testing.T) {
+	t.Parallel()
+
+	if got := relPath("api/metrics.go", "metrics.go"); got != "api/metrics.go" {
+		t.Fatalf("basename under file root: %q", got)
+	}
+	if got := relPath("/repo", "/repo"); got != "/repo" {
+		t.Fatalf("same path: %q", got)
+	}
+	if got := relPath("/repo", "/repo/a.go"); got != "a.go" {
+		t.Fatalf("child: %q", got)
+	}
+}
+
+func TestWaitErrBranches(t *testing.T) {
+	t.Parallel()
+
+	var stderr strings.Builder
+	if err := waitErr(context.Background(), nil, &stderr, false); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := waitErr(ctx, context.Canceled, &stderr, false); err == nil || !strings.Contains(err.Error(), "canceled") {
+		t.Fatalf("want canceled, got %v", err)
+	}
+
+	dctx, dcancel := context.WithTimeout(context.Background(), 0)
+	<-dctx.Done()
+	dcancel()
+	if err := waitErr(dctx, context.DeadlineExceeded, &stderr, false); err == nil || !strings.Contains(err.Error(), "timed out") {
+		t.Fatalf("want timeout, got %v", err)
+	}
+
+	if err := waitErr(context.Background(), errors.New("boom"), &stderr, false); err == nil || !strings.Contains(err.Error(), "ast-grep failed") {
+		t.Fatalf("want failed without stderr detail, got %v", err)
+	}
+}
+
+func TestCheckVersionUnparseable(t *testing.T) {
+	t.Parallel()
+
+	bin := fakeAstGrepVersionOnly(t, "not-a-version")
+	err := checkVersion(context.Background(), bin)
+	if err == nil || !strings.Contains(err.Error(), "cannot parse") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestScanSingleFileTarget(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	file := filepath.Join(dir, "m.go")
+	if err := os.WriteFile(file, []byte("package p\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := &Runner{Bin: fakeAstGrep(t, "", "", minVersion, 0)}
+	got, err := r.Scan(context.Background(), file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("got %v", got)
+	}
+}
+
+func TestScanMergesCardinalityExtras(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	src := []byte(`package shop;
+class M {
+  private static final String[] LABELS = { "user_id" };
+  void f(){ Counter.build().labelNames(LABELS).register(); }
+}
+`)
+	if err := os.WriteFile(filepath.Join(dir, "M.java"), src, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := &Runner{Bin: fakeAstGrep(t, "", "", minVersion, 0)}
+	got, err := r.Scan(context.Background(), dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) == 0 {
+		t.Fatal("want cardinality extras from Java const labels")
 	}
 }
