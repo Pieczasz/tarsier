@@ -50,3 +50,27 @@ func TestMaterializeRejectsNonDirectory(t *testing.T) {
 		t.Fatal("Materialize into a file path must fail")
 	}
 }
+
+func TestMaterializeRejectsUtilsPathConflict(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "utils"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Materialize(dir); err == nil {
+		t.Fatal("Materialize must fail when utils is a file")
+	}
+}
+
+func TestMaterializeRejectsConfigPathConflict(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "sgconfig.yml"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Materialize(dir); err == nil {
+		t.Fatal("Materialize must fail when sgconfig.yml is a directory")
+	}
+}
