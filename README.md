@@ -11,7 +11,7 @@ Prerequisites: Go 1.27+ and [ast-grep](https://ast-grep.github.io/) 0.45.x on `P
 brew install ast-grep
 # or: npm i -g @ast-grep/cli@0.45.1
 
-go install github.com/Pieczasz/tarsier/cmd/tarsier@v0.1.0
+go install github.com/Pieczasz/tarsier/cmd/tarsier@v0.2.0
 ```
 
 Or from source:
@@ -93,5 +93,5 @@ Apache-2.0. See [LICENSE](LICENSE).
 
 Shared packages live at the module root (not under `internal/`) so product
 code can `require github.com/Pieczasz/tarsier` and import e.g.
-`github.com/Pieczasz/tarsier/finding`, `…/engine/pattern`, `…/rules`.
+`github.com/Pieczasz/tarsier/finding`, `.../engine/pattern`, `.../rules`.
 
