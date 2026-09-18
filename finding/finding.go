@@ -11,14 +11,12 @@ import (
 // Finding lifecycle states. Baselines drop known findings from output;
 // suppressions keep them, marked.
 const (
-	// StatusOpen is a finding reported as-is.
 	StatusOpen = "open"
-	// StatusSuppressed is a finding quieted by an inline tarsier:ignore
-	// comment. It stays in JSON output so consumers can audit suppressions.
+	// StatusSuppressed stays in JSON so consumers can audit quieted findings.
 	StatusSuppressed = "suppressed"
 )
 
-// Finding is a single normalized observability gap emitted by an analyzer.
+// Finding is the shared schema across analyzers, reports, store, and PR checks.
 type Finding struct {
 	Fingerprint string `json:"fingerprint"`
 	Rule        string `json:"rule"`
@@ -62,7 +60,7 @@ type WorkflowRef struct {
 	Criticality string `json:"criticality"`
 }
 
-// Fingerprint hashes the finding identity for baselines and suppression.
+// Fingerprint is stable across line drift; baselines and suppressions key on it.
 func Fingerprint(rule, module, relPath, symbol string) string {
 	sum := sha256.Sum256([]byte(strings.Join([]string{
 		rule, module, strings.ReplaceAll(relPath, "\\", "/"), symbol,

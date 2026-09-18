@@ -22,7 +22,7 @@ func TestCheckCardinalityFiltersRules(t *testing.T) {
 	}
 	out := buf.String()
 	if !strings.Contains(out, "metrics/high-cardinality-label") && !strings.Contains(out, "high-cardinality") {
-		// text format prints message, not always rule id — accept either
+		// text format prints message, not always rule id - accept either
 		if !strings.Contains(out, "unbounded") && !strings.Contains(out, "billable") {
 			t.Fatalf("expected cardinality output, got %q", out)
 		}

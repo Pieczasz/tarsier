@@ -610,7 +610,7 @@ func TestPathInsideRootEdges(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !pathInsideRoot(abs, filepath.Join(dir, "a.go")) {
-		// file need not exist for Abs; EvalSymlinks may fail — create it
+		// file need not exist for Abs; EvalSymlinks may fail - create it
 		if err := os.WriteFile(filepath.Join(dir, "a.go"), []byte("x"), 0o600); err != nil {
 			t.Fatal(err)
 		}

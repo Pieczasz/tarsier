@@ -1,5 +1,5 @@
 // Package resolve is the thin per-file import/symbol layer for the pattern
-// tier. It is deliberately not a type checker: alias→package maps plus
+// tier. It is deliberately not a type checker: alias->package maps plus
 // file-level string / string-slice literals (and Python Exception params).
 package resolve
 
@@ -23,9 +23,9 @@ type Lit struct {
 type File struct {
 	Path    string
 	Lang    string
-	Imports map[string]string // local name → import path
-	Strings map[string][]Lit  // const/var name → string literals (incl. slice elems)
-	Params  map[string]string // Python: param → type annotation text
+	Imports map[string]string // local name -> import path
+	Strings map[string][]Lit  // const/var name -> string literals (incl. slice elems)
+	Params  map[string]string // Python: param -> type annotation text
 }
 
 const (

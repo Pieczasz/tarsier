@@ -93,7 +93,7 @@ func TestDefaultsValidate(t *testing.T) {
 	if err := analysis.Validate(Defaults()); err != nil {
 		t.Fatal(err)
 	}
-	// Full default set on the tiny fixture — exercises wrapper registration.
+	// Full default set on the tiny fixture - exercises wrapper registration.
 	got, err := (&Runner{}).Scan(godeepDir(t))
 	if err != nil {
 		t.Fatal(err)

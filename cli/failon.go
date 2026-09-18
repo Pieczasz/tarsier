@@ -14,7 +14,7 @@ const (
 	failOnError   = "error"
 )
 
-// failOnError is returned after a successful scan when --fail-on is tripped.
+// failOnThresholdError is returned after a successful scan when --fail-on is tripped.
 type failOnThresholdError struct {
 	threshold string
 	count     int
