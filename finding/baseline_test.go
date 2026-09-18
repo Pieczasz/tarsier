@@ -67,7 +67,7 @@ func TestLoadBaselineRejectsUnknownVersion(t *testing.T) {
 	t.Parallel()
 
 	path := filepath.Join(t.TempDir(), "baseline.json")
-	if err := os.WriteFile(path, []byte(`{"version":2,"fingerprints":["abc"]}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"version":99,"fingerprints":["abc"]}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := LoadBaseline(path); err == nil {

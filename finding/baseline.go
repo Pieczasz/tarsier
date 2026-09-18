@@ -7,6 +7,8 @@ import (
 	"slices"
 )
 
+// baselineVersion is the on-disk schema for baseline.json. Bump only when
+// fingerprint encoding or fields change in a way that invalidates old files.
 const baselineVersion = 1
 
 // Baseline is the versioned fingerprint set recorded at adoption. A later

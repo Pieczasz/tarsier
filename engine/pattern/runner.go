@@ -213,10 +213,23 @@ func parseVersion(s string) [3]int {
 		if i > 2 {
 			break
 		}
-		n, _ := strconv.Atoi(strings.TrimFunc(part, func(r rune) bool { return r < '0' || r > '9' }))
-		v[i] = n
+		v[i] = leadingInt(part)
 	}
 	return v
+}
+
+// leadingInt returns the integer prefix of s (e.g. "45-rc1" -> 45). Atoi on
+// the raw token would yield 0 for any pre-release or build suffix.
+func leadingInt(s string) int {
+	i := 0
+	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
+		i++
+	}
+	if i == 0 {
+		return 0
+	}
+	n, _ := strconv.Atoi(s[:i])
+	return n
 }
 
 func decode(r io.Reader, root, dir string) ([]finding.Finding, error) {

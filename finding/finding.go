@@ -4,7 +4,9 @@ package finding
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
+	"hash"
 	"strings"
 )
 
@@ -61,11 +63,22 @@ type WorkflowRef struct {
 }
 
 // Fingerprint is stable across line drift; baselines and suppressions key on it.
+// Fields are length-prefixed so a "|" (or any byte) inside one field cannot
+// collide with a boundary in another (rule|module vs file|symbol).
 func Fingerprint(rule, module, relPath, symbol string) string {
-	sum := sha256.Sum256([]byte(strings.Join([]string{
-		rule, module, strings.ReplaceAll(relPath, "\\", "/"), symbol,
-	}, "|")))
-	return hex.EncodeToString(sum[:])
+	h := sha256.New()
+	writeFP(h, rule)
+	writeFP(h, module)
+	writeFP(h, strings.ReplaceAll(relPath, "\\", "/"))
+	writeFP(h, symbol)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func writeFP(h hash.Hash, s string) {
+	var b [binary.MaxVarintLen64]byte
+	n := binary.PutUvarint(b[:], uint64(len(s)))
+	_, _ = h.Write(b[:n])
+	_, _ = h.Write([]byte(s))
 }
 
 // Fill computes and sets the finding fingerprint from its identity fields.
