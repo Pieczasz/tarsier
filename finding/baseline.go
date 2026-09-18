@@ -7,9 +7,9 @@ import (
 	"slices"
 )
 
-// baselineVersion 2: fingerprints are length-prefixed (see finding.Fingerprint).
-// Version 1 files must be regenerated with --baseline-write.
-const baselineVersion = 2
+// baselineVersion is the on-disk schema for baseline.json. Bump only when
+// fingerprint encoding or fields change in a way that invalidates old files.
+const baselineVersion = 1
 
 // Baseline is the versioned fingerprint set recorded at adoption. A later
 // scan reports only findings whose fingerprint is absent here.

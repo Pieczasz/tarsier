@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,8 +26,17 @@ const (
 	engineAll     = "all"
 )
 
-func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engines and lifecycle
+type scanOpts struct {
+	engine        string
+	rules         string
+	timeout       time.Duration
+	baseline      string
+	baselineWrite string
+	failOn        string
+	format        string
+}
 
+func newScanCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scan [path]",
 		Short: "Scan a repository for observability gaps",
@@ -41,82 +51,7 @@ func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engi
 			"(go/analysis deep tier), or all. Medium-confidence findings " +
 			"never trip --fail-on.",
 		Args: cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			root := "."
-			if len(args) == 1 {
-				root = args[0]
-			}
-
-			engine, _ := cmd.Flags().GetString("engine")
-			switch engine {
-			case "", enginePattern, engineGo, engineAll:
-			default:
-				return fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
-			}
-			if engine == "" {
-				engine = enginePattern
-			}
-
-			config, _ := cmd.Flags().GetString("rules")
-			if config == "" && engine != engineGo {
-				dir, err := os.MkdirTemp("", "tarsier-rules-")
-				if err != nil {
-					return err
-				}
-				defer func() { _ = os.RemoveAll(dir) }()
-				if config, err = rules.Materialize(dir); err != nil {
-					return err
-				}
-			}
-			failOn, _ := cmd.Flags().GetString("fail-on")
-			threshold, err := failOnRank(failOn)
-			if err != nil {
-				return err
-			}
-
-			timeout, _ := cmd.Flags().GetDuration("timeout")
-			started := time.Now()
-			var findings []finding.Finding
-
-			if engine == enginePattern || engine == engineAll {
-				runner := &pattern.Runner{Config: config, Timeout: timeout}
-				got, err := runner.Scan(cmd.Context(), root)
-				if err != nil {
-					return err
-				}
-				findings = append(findings, got...)
-			}
-			if engine == engineGo || engine == engineAll {
-				got, err := (&enggolang.Runner{}).Scan(root)
-				if err != nil {
-					return err
-				}
-				findings = append(findings, got...)
-			}
-
-			baseline, _ := cmd.Flags().GetString("baseline")
-			baselineWrite, _ := cmd.Flags().GetString("baseline-write")
-			findings, suppressed, known, err := applyLifecycle(root, findings, baseline, baselineWrite)
-			if err != nil {
-				return err
-			}
-			slog.Info("scan complete",
-				"root", root,
-				"engine", engine,
-				"findings", len(findings),
-				"suppressed", suppressed,
-				"known", known,
-				"duration_ms", time.Since(started).Milliseconds())
-
-			format, _ := cmd.Flags().GetString("output")
-			if err := render(cmd.OutOrStdout(), findings, format, root); err != nil {
-				return err
-			}
-			if n := blockingCount(findings, threshold); n > 0 {
-				return failOnThresholdError{threshold: failOn, count: n}
-			}
-			return nil
-		},
+		RunE: runScan,
 	}
 	cmd.Flags().String("rules", "", "ast-grep project config (default: the embedded rule pack)")
 	cmd.Flags().String("engine", enginePattern, "analyzer engine: pattern, go or all")
@@ -125,6 +60,119 @@ func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engi
 	cmd.Flags().String("baseline-write", "", "write current findings as a baseline file")
 	cmd.Flags().String("fail-on", failOnNone, "exit 1 if a non-suppressed finding is at or above this severity: none, info, warning, error")
 	return cmd
+}
+
+func runScan(cmd *cobra.Command, args []string) error {
+	root := "."
+	if len(args) == 1 {
+		root = args[0]
+	}
+	opts, err := readScanOpts(cmd)
+	if err != nil {
+		return err
+	}
+	threshold, err := failOnRank(opts.failOn)
+	if err != nil {
+		return err
+	}
+
+	cleanup, err := ensurePatternRules(&opts)
+	if err != nil {
+		return err
+	}
+	if cleanup != nil {
+		defer cleanup()
+	}
+
+	started := time.Now()
+	findings, err := runEngines(cmd.Context(), root, &opts)
+	if err != nil {
+		return err
+	}
+	findings, suppressed, known, err := applyLifecycle(root, findings, opts.baseline, opts.baselineWrite)
+	if err != nil {
+		return err
+	}
+	slog.Info("scan complete",
+		"root", root,
+		"engine", opts.engine,
+		"findings", len(findings),
+		"suppressed", suppressed,
+		"known", known,
+		"duration_ms", time.Since(started).Milliseconds())
+
+	if err := render(cmd.OutOrStdout(), findings, opts.format, root); err != nil {
+		return err
+	}
+	if n := blockingCount(findings, threshold); n > 0 {
+		return failOnThresholdError{threshold: opts.failOn, count: n}
+	}
+	return nil
+}
+
+func readScanOpts(cmd *cobra.Command) (scanOpts, error) {
+	engine, _ := cmd.Flags().GetString("engine")
+	switch engine {
+	case "", enginePattern, engineGo, engineAll:
+	default:
+		return scanOpts{}, fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
+	}
+	if engine == "" {
+		engine = enginePattern
+	}
+	rulesPath, _ := cmd.Flags().GetString("rules")
+	timeout, _ := cmd.Flags().GetDuration("timeout")
+	baseline, _ := cmd.Flags().GetString("baseline")
+	baselineWrite, _ := cmd.Flags().GetString("baseline-write")
+	failOn, _ := cmd.Flags().GetString("fail-on")
+	format, _ := cmd.Flags().GetString("output")
+	return scanOpts{
+		engine:        engine,
+		rules:         rulesPath,
+		timeout:       timeout,
+		baseline:      baseline,
+		baselineWrite: baselineWrite,
+		failOn:        failOn,
+		format:        format,
+	}, nil
+}
+
+// ensurePatternRules materializes the embedded rule pack when pattern tier
+// runs without --rules. cleanup removes the temp dir; nil means nothing to do.
+func ensurePatternRules(opts *scanOpts) (cleanup func(), err error) {
+	if opts.rules != "" || opts.engine == engineGo {
+		return nil, nil
+	}
+	dir, err := os.MkdirTemp("", "tarsier-rules-")
+	if err != nil {
+		return nil, err
+	}
+	path, err := rules.Materialize(dir)
+	if err != nil {
+		_ = os.RemoveAll(dir)
+		return nil, err
+	}
+	opts.rules = path
+	return func() { _ = os.RemoveAll(dir) }, nil
+}
+
+func runEngines(ctx context.Context, root string, opts *scanOpts) ([]finding.Finding, error) {
+	var findings []finding.Finding
+	if opts.engine == enginePattern || opts.engine == engineAll {
+		got, err := (&pattern.Runner{Config: opts.rules, Timeout: opts.timeout}).Scan(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+		findings = append(findings, got...)
+	}
+	if opts.engine == engineGo || opts.engine == engineAll {
+		got, err := (&enggolang.Runner{}).Scan(root)
+		if err != nil {
+			return nil, err
+		}
+		findings = append(findings, got...)
+	}
+	return findings, nil
 }
 
 // sourcePath resolves a finding's scan-relative path against the scan root.

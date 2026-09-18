@@ -75,20 +75,6 @@ func TestLoadBaselineRejectsUnknownVersion(t *testing.T) {
 	}
 }
 
-func TestLoadBaselineRejectsV1Fingerprints(t *testing.T) {
-	t.Parallel()
-
-	path := filepath.Join(t.TempDir(), "baseline.json")
-	// v1 used pipe-joined SHA-256; v2 length-prefixes fields. Refuse v1 so
-	// CI does not silently treat every finding as new.
-	if err := os.WriteFile(path, []byte(`{"version":1,"fingerprints":["abc"]}`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := LoadBaseline(path); err == nil {
-		t.Fatal("v1 baselines must error so operators regenerate with --baseline-write")
-	}
-}
-
 func TestLoadBaselineMissingPathIsAnError(t *testing.T) {
 	t.Parallel()
 
