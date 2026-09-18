@@ -71,7 +71,6 @@ func Defaults() []*analysis.Analyzer {
 // Scan type-checks packages under root and returns normalized findings.
 // Root must be a Go module (or contain one). Non-Go trees return nil, nil.
 func (r *Runner) Scan(root string) ([]finding.Finding, error) {
-
 	analyzers := r.Analyzers
 	if analyzers == nil {
 		analyzers = Defaults()
