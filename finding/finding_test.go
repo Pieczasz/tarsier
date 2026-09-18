@@ -27,6 +27,9 @@ func TestFingerprintIsLineIndependentAndStable(t *testing.T) {
 	if Fingerprint("a|b", "", "x", "") == Fingerprint("a", "b", "x", "") {
 		t.Fatal("fingerprint collides across field boundaries")
 	}
+	if Fingerprint("r", "", "a|b", "c") == Fingerprint("r", "", "a", "b|c") {
+		t.Fatal("fingerprint collides across file/symbol boundary")
+	}
 }
 
 func TestFingerprintIgnoresLineForLongSymbolsToo(t *testing.T) {
