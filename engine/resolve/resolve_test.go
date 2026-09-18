@@ -172,6 +172,29 @@ class M {
 	}
 }
 
+func TestAnalyzeGoConstCarryForward(t *testing.T) {
+	t.Parallel()
+	// Go reuses the previous expression list when a const spec omits values.
+	src := []byte(`package p
+const (
+	a = "user_id"
+	b
+	c, d = "email", "token"
+	e, f
+)
+`)
+	f := Analyze("x.go", src)
+	if got := f.Strings["b"]; len(got) != 1 || got[0].Value != "user_id" {
+		t.Fatalf("carried single const: %+v", f.Strings)
+	}
+	if got := f.Strings["e"]; len(got) != 1 || got[0].Value != "email" {
+		t.Fatalf("carried multi const e: %+v", f.Strings)
+	}
+	if got := f.Strings["f"]; len(got) != 1 || got[0].Value != "token" {
+		t.Fatalf("carried multi const f: %+v", f.Strings)
+	}
+}
+
 func TestAnalyzeGoVersionedAndBlank(t *testing.T) {
 	t.Parallel()
 	src := []byte(`package p

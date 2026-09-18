@@ -133,20 +133,31 @@ func analyzeGo(f *File, src []byte) { //nolint:gocyclo // file-level Go parser w
 		if !ok || (gen.Tok != token.CONST && gen.Tok != token.VAR) {
 			continue
 		}
+		// Const blocks may omit the expression list; Go reuses the previous
+		// non-empty list. Mirror that so label names in carried specs resolve.
+		var lastValues []ast.Expr
 		for _, spec := range gen.Specs {
 			vs, ok := spec.(*ast.ValueSpec)
 			if !ok {
 				continue
+			}
+			values := vs.Values
+			if gen.Tok == token.CONST {
+				if len(values) == 0 {
+					values = lastValues
+				} else {
+					lastValues = values
+				}
 			}
 			for i, name := range vs.Names {
 				if name == nil || name.Name == "_" {
 					continue
 				}
 				var val ast.Expr
-				if i < len(vs.Values) {
-					val = vs.Values[i]
-				} else if len(vs.Values) == 1 {
-					val = vs.Values[0]
+				if i < len(values) {
+					val = values[i]
+				} else if len(values) == 1 {
+					val = values[0]
 				}
 				if val == nil {
 					continue
