@@ -57,7 +57,7 @@ func run(pass *analysis.Pass) (any, error) { //nolint:gocyclo // wrapper + direc
 		return false
 	})
 
-	// Pass 2: call sites of those wrappers (one hop) — medium confidence.
+	// Pass 2: call sites of those wrappers (one hop) - medium confidence.
 	insp.Nodes([]ast.Node{(*ast.CallExpr)(nil)}, func(n ast.Node, push bool) bool {
 		if !push {
 			return false
@@ -70,7 +70,7 @@ func run(pass *analysis.Pass) (any, error) { //nolint:gocyclo // wrapper + direc
 		if fn == nil || !wrappers[fn] {
 			return false
 		}
-		// Don't double-report the resource.New site inside the wrapper body.
+		// Skip the inner resource.New; pass 1 already reported it.
 		if isResourceNew(pass, call) {
 			return false
 		}

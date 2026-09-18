@@ -10,12 +10,63 @@ import (
 func TestFailOnRank(t *testing.T) {
 	t.Parallel()
 
-	if _, err := failOnRank("loud"); err == nil || !strings.Contains(err.Error(), "invalid --fail-on") {
-		t.Fatalf("typo'd threshold must fail, got %v", err)
+	tests := []struct {
+		level string
+		want  int
+		err   bool
+	}{
+		{level: "", want: 0},
+		{level: failOnNone, want: 0},
+		{level: "hint", want: 1},
+		{level: failOnInfo, want: 2},
+		{level: failOnWarning, want: 3},
+		{level: failOnError, want: 4},
+		{level: "loud", err: true},
 	}
-	n, err := failOnRank(failOnNone)
-	if err != nil || n != 0 {
-		t.Fatalf("none = %d, %v; want 0, nil", n, err)
+	for _, tt := range tests {
+		t.Run(tt.level, func(t *testing.T) {
+			t.Parallel()
+			n, err := failOnRank(tt.level)
+			if tt.err {
+				if err == nil || !strings.Contains(err.Error(), "invalid --fail-on") {
+					t.Fatalf("want invalid --fail-on error, got %v", err)
+				}
+				return
+			}
+			if err != nil || n != tt.want {
+				t.Fatalf("failOnRank(%q) = %d, %v; want %d, nil", tt.level, n, err, tt.want)
+			}
+		})
+	}
+}
+
+func TestSeverityRank(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		sev  string
+		want int
+	}{
+		{sev: "hint", want: 1},
+		{sev: "info", want: 2},
+		{sev: "warning", want: 3},
+		{sev: "error", want: 4},
+		{sev: "unknown", want: 0},
+		{sev: "", want: 0},
+	}
+	for _, tt := range tests {
+		if got := severityRank(tt.sev); got != tt.want {
+			t.Errorf("severityRank(%q) = %d, want %d", tt.sev, got, tt.want)
+		}
+	}
+}
+
+func TestFailOnThresholdErrorMessage(t *testing.T) {
+	t.Parallel()
+
+	err := failOnThresholdError{threshold: "warning", count: 3}
+	if got := err.Error(); got != "3 findings at or above warning" {
+		t.Fatalf("Error() = %q", got)
 	}
 }
 

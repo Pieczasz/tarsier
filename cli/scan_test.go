@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -122,7 +123,14 @@ func TestSourcePath(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	file := filepath.Join(dir, "sub", "a.go")
+	sub := filepath.Join(dir, "sub")
+	if err := os.MkdirAll(sub, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(sub, "a.go")
+	if err := os.WriteFile(file, []byte("package p\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	if got := sourcePath(dir, filepath.Join("sub", "a.go")); got != file {
 		t.Errorf("dir root joins: got %q want %q", got, file)
@@ -130,9 +138,140 @@ func TestSourcePath(t *testing.T) {
 	if got := sourcePath(file, file); got != file {
 		t.Errorf("single-file root returns the input: got %q want %q", got, file)
 	}
+	if got := sourcePath(file, "a.go"); got != file {
+		t.Errorf("single-file root + basename: got %q want %q", got, file)
+	}
+	if got := sourcePath(file, "other.go"); got != filepath.Join(sub, "other.go") {
+		t.Errorf("single-file root + sibling: got %q", got)
+	}
 	if got := sourcePath("/repo", "/abs/a.go"); got != "/abs/a.go" {
 		t.Errorf("absolute finding passes through: got %q", got)
 	}
+}
+
+func TestRenderRejectsUnknownFormat(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	err := render(&out, nil, "yaml", ".")
+	if err == nil || !strings.Contains(err.Error(), "invalid --output") {
+		t.Fatalf("want invalid --output error, got %v", err)
+	}
+}
+
+func TestScanCommand(t *testing.T) {
+	badshop := filepath.Join("..", "fixtures", "_badshop")
+	if _, err := os.Stat(badshop); err != nil {
+		t.Skip("fixtures not available")
+	}
+	godeep := filepath.Join("..", "fixtures", "godeep")
+	clean := t.TempDir()
+	if err := os.WriteFile(filepath.Join(clean, "README.md"), []byte("ok\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("pattern scan on fixture finds issues", func(t *testing.T) {
+		root := NewRootCommand()
+		buf := &bytes.Buffer{}
+		root.SetOut(buf)
+		root.SetArgs([]string{"scan", "--engine", "pattern", "--output", "json", badshop})
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(buf.String(), `"rule"`) {
+			t.Fatalf("expected findings JSON, got %q", buf.String())
+		}
+	})
+
+	t.Run("go engine on godeep", func(t *testing.T) {
+		root := NewRootCommand()
+		buf := &bytes.Buffer{}
+		root.SetOut(buf)
+		root.SetArgs([]string{"scan", "--engine", "go", "--output", "text", godeep})
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(buf.String(), "findings") {
+			t.Fatalf("expected text summary, got %q", buf.String())
+		}
+	})
+
+	t.Run("clean tree with fail-on stays quiet", func(t *testing.T) {
+		root := NewRootCommand()
+		buf := &bytes.Buffer{}
+		root.SetOut(buf)
+		root.SetArgs([]string{"scan", "--engine", "pattern", "--fail-on", "warning", clean})
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(buf.String(), "0 findings") {
+			t.Fatalf("got %q", buf.String())
+		}
+	})
+
+	t.Run("invalid engine", func(t *testing.T) {
+		root := NewRootCommand()
+		root.SetOut(&bytes.Buffer{})
+		root.SetErr(&bytes.Buffer{})
+		root.SetArgs([]string{"scan", "--engine", "wasm", clean})
+		err := root.Execute()
+		if err == nil || !strings.Contains(err.Error(), "invalid --engine") {
+			t.Fatalf("want invalid --engine, got %v", err)
+		}
+	})
+
+	t.Run("invalid fail-on", func(t *testing.T) {
+		root := NewRootCommand()
+		root.SetOut(&bytes.Buffer{})
+		root.SetErr(&bytes.Buffer{})
+		root.SetArgs([]string{"scan", "--fail-on", "loud", clean})
+		err := root.Execute()
+		if err == nil || !strings.Contains(err.Error(), "invalid --fail-on") {
+			t.Fatalf("want invalid --fail-on, got %v", err)
+		}
+	})
+
+	t.Run("fail-on trips on findings", func(t *testing.T) {
+		root := NewRootCommand()
+		root.SetOut(&bytes.Buffer{})
+		root.SetErr(&bytes.Buffer{})
+		root.SetArgs([]string{"scan", "--engine", "pattern", "--fail-on", "warning", badshop})
+		err := root.Execute()
+		if err == nil {
+			t.Fatal("want fail-on threshold error")
+		}
+		var thresh failOnThresholdError
+		if !errors.As(err, &thresh) && !strings.Contains(err.Error(), "findings at or above") {
+			t.Fatalf("want threshold error, got %v", err)
+		}
+	})
+
+	t.Run("explicit rules config", func(t *testing.T) {
+		cfg, err := filepath.Abs(filepath.Join("..", "sgconfig.yml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		root := NewRootCommand()
+		buf := &bytes.Buffer{}
+		root.SetOut(buf)
+		root.SetArgs([]string{"scan", "--rules", cfg, "--engine", "pattern", clean})
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("html output", func(t *testing.T) {
+		root := NewRootCommand()
+		buf := &bytes.Buffer{}
+		root.SetOut(buf)
+		root.SetArgs([]string{"scan", "--engine", "pattern", "--output", "html", clean})
+		if err := root.Execute(); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(buf.String(), "<!DOCTYPE html>") {
+			t.Fatalf("want html, got %q", buf.String())
+		}
+	})
 }
 
 func writeSource(t *testing.T, dir, body string) {

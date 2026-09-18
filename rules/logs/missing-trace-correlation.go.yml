@@ -9,11 +9,11 @@ metadata:
   confidence: medium
   spec_ref: instrumentation-score/LOG-001
 
-message: "Structured logger is used alongside OTel without a log↔trace bridge."
+message: "Structured logger is used alongside OTel without a log<->trace bridge."
 note: |
   Without trace_id/span_id on log records, logs cannot join traces. When this
   module already imports go.opentelemetry.io/otel and log/slog (or zap), wire
-  go.opentelemetry.io/contrib/bridges/otelslog (or otelzap) — do not call the
+  go.opentelemetry.io/contrib/bridges/otelslog (or otelzap) - do not call the
   Logs Bridge API from application code.
 
   Precision ceiling: a bridge registered in another package is invisible.

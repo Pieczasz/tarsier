@@ -1,6 +1,7 @@
 package resolve
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -598,4 +599,49 @@ class Leak {
 
 func write(dir, name string, body []byte) error {
 	return os.WriteFile(filepath.Join(dir, name), body, 0o600)
+}
+
+func TestPathInsideRootEdges(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !pathInsideRoot(abs, filepath.Join(dir, "a.go")) {
+		// file need not exist for Abs; EvalSymlinks may fail - create it
+		if err := os.WriteFile(filepath.Join(dir, "a.go"), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if !pathInsideRoot(abs, filepath.Join(dir, "a.go")) {
+			t.Fatal("expected inside")
+		}
+	}
+	if pathInsideRoot(abs, filepath.Join(dir, "missing-dangling-xyz")) {
+		t.Fatal("dangling path must be rejected")
+	}
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, "b.go"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if pathInsideRoot(abs, filepath.Join(outside, "b.go")) {
+		t.Fatal("outside path must be rejected")
+	}
+}
+
+func TestExtrasForFileNonJavaPython(t *testing.T) {
+	t.Parallel()
+	got, err := extrasForFile("x.go", "x.go", []byte("package p\n"))
+	if err != nil || len(got) != 0 {
+		t.Fatalf("%v %v", got, err)
+	}
+}
+
+func TestVisitCardinalityPathWalkError(t *testing.T) {
+	t.Parallel()
+	_, skip, err := visitCardinalityPath("/tmp", "/tmp", "/tmp/x", nil, errors.New("walk boom"))
+	if !skip || err == nil {
+		t.Fatalf("want skip+err, got skip=%v err=%v", skip, err)
+	}
 }

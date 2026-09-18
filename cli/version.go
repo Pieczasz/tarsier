@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"runtime/debug"
 
 	"github.com/spf13/cobra"
@@ -29,21 +30,27 @@ func newVersionCommand() *cobra.Command {
 				enc.SetIndent("", "  ")
 				return enc.Encode(info)
 			}
-			dirty := ""
-			if info.Dirty {
-				dirty = "-dirty"
-			}
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "%s %s%s (%s)\n",
-				info.Module, info.Revision, dirty, info.Go)
+			_, err := io.WriteString(cmd.OutOrStdout(), formatVersionText(info))
 			return err
 		},
 	}
 }
 
+func formatVersionText(info buildInfo) string {
+	dirty := ""
+	if info.Dirty {
+		dirty = "-dirty"
+	}
+	return fmt.Sprintf("%s %s%s (%s)\n", info.Module, info.Revision, dirty, info.Go)
+}
+
 func readBuildInfo() buildInfo {
+	return buildInfoFrom(debug.ReadBuildInfo())
+}
+
+func buildInfoFrom(raw *debug.BuildInfo, ok bool) buildInfo {
 	info := buildInfo{Module: "tarsier", Revision: "unknown", Go: "unknown"}
-	raw, ok := debug.ReadBuildInfo()
-	if !ok {
+	if !ok || raw == nil {
 		return info
 	}
 	info.Module, info.Go = raw.Main.Path, raw.GoVersion

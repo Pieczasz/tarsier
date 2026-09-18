@@ -70,8 +70,7 @@ func Defaults() []*analysis.Analyzer {
 
 // Scan type-checks packages under root and returns normalized findings.
 // Root must be a Go module (or contain one). Non-Go trees return nil, nil.
-func (r *Runner) Scan(root string) ([]finding.Finding, error) { //nolint:gocyclo // load + filter + per-analyzer loop
-
+func (r *Runner) Scan(root string) ([]finding.Finding, error) {
 	analyzers := r.Analyzers
 	if analyzers == nil {
 		analyzers = Defaults()
@@ -94,15 +93,8 @@ func (r *Runner) Scan(root string) ([]finding.Finding, error) { //nolint:gocyclo
 	if len(pkgs) == 0 {
 		return nil, nil
 	}
-	// No Go files at all (e.g. JS-only tree) — not an error.
-	hasGo := false
-	for _, p := range pkgs {
-		if len(p.GoFiles) > 0 || len(p.CompiledGoFiles) > 0 {
-			hasGo = true
-			break
-		}
-	}
-	if !hasGo {
+	if !packagesContainGo(pkgs) {
+		// Mixed-language trees still Load; empty Go set is success, not failure.
 		return nil, nil
 	}
 
@@ -129,6 +121,15 @@ func (r *Runner) Scan(root string) ([]finding.Finding, error) { //nolint:gocyclo
 		}
 	}
 	return out, nil
+}
+
+func packagesContainGo(pkgs []*packages.Package) bool {
+	for _, p := range pkgs {
+		if len(p.GoFiles) > 0 || len(p.CompiledGoFiles) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // runAnalyzer runs one analyzer. Some third-party analyzers panic on partial
