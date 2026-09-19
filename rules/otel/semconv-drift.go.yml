@@ -1,0 +1,48 @@
+id: otel-semconv-drift-go
+language: go
+severity: info
+
+metadata:
+  rule: otel/semconv-drift
+  requires: attributes
+  expectation_layer: "2"
+  confidence: high
+  spec_ref: otel/semconv-http-migration
+
+message: "Deprecated OTel HTTP attribute name; TraceQL/PromQL joins break across SDK versions."
+note: |
+  Prefer the stable HTTP semantic conventions
+  (https://opentelemetry.io/docs/specs/semconv/http/migration-guide/):
+
+    http.method       -> http.request.method
+    http.status_code  -> http.response.status_code
+    http.target       -> url.path (+ url.query)
+    http.url          -> url.full
+    http.scheme       -> url.scheme
+    http.host         -> server.address (+ server.port)
+    net.host.name     -> server.address
+    http.user_agent   -> user_agent.original
+
+  Flagged when go.opentelemetry.io/otel/attribute (or semconv) is imported
+  and a deprecated key appears as a string literal. Advisory severity until
+  corpus precision is measured.
+
+rule:
+  any:
+    - pattern: '"http.method"'
+    - pattern: '"http.status_code"'
+    - pattern: '"http.target"'
+    - pattern: '"http.url"'
+    - pattern: '"http.scheme"'
+    - pattern: '"http.host"'
+    - pattern: '"net.host.name"'
+    - pattern: '"net.peer.name"'
+    - pattern: '"http.user_agent"'
+  all:
+    - inside:
+        stopBy: end
+        kind: source_file
+        has:
+          stopBy: end
+          kind: import_spec
+          regex: 'go\.opentelemetry\.io/otel/(attribute|semconv)'

@@ -209,10 +209,8 @@ func versionAtLeast(got, want string) bool {
 
 func parseVersion(s string) [3]int {
 	var v [3]int
+	// SplitN(..., 3) yields at most three parts; no extra bound check.
 	for i, part := range strings.SplitN(strings.TrimPrefix(s, "v"), ".", 3) {
-		if i > 2 {
-			break
-		}
 		n, _ := strconv.Atoi(strings.TrimFunc(part, func(r rune) bool { return r < '0' || r > '9' }))
 		v[i] = n
 	}

@@ -1,0 +1,20 @@
+id: otel-semconv-drift-ts
+valid:
+  - |
+    import { Span } from '@opentelemetry/api';
+    span.setAttribute('http.request.method', 'GET');
+  - |
+    const label = 'http.method';
+  - |
+    import { ATTR_URL_PATH } from '@opentelemetry/semantic-conventions';
+    span.setAttribute(ATTR_URL_PATH, '/x');
+invalid:
+  - |
+    import { Span } from '@opentelemetry/api';
+    span.setAttribute('http.method', 'GET');
+  - |
+    import { Span } from '@opentelemetry/api';
+    span.setAttribute("http.target", "/checkout?x=1");
+  - |
+    import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+    const attrs = { 'http.status_code': 500 };

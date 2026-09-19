@@ -1,0 +1,32 @@
+id: otel-semconv-drift-go
+valid:
+  # Modern keys are fine.
+  - |
+    package main
+    import "go.opentelemetry.io/otel/attribute"
+    var _ = attribute.String("http.request.method", "GET")
+  # Deprecated key without otel import - out of scope (precision gate).
+  - |
+    package main
+    const label = "http.method"
+  # Split replacement for http.target.
+  - |
+    package main
+    import "go.opentelemetry.io/otel/attribute"
+    var _ = []attribute.KeyValue{
+        attribute.String("url.path", "/x"),
+        attribute.String("url.query", "a=1"),
+    }
+invalid:
+  - |
+    package main
+    import "go.opentelemetry.io/otel/attribute"
+    var _ = attribute.String("http.method", "GET")
+  - |
+    package main
+    import "go.opentelemetry.io/otel/attribute"
+    var _ = attribute.String("http.target", "/checkout?x=1")
+  - |
+    package main
+    import _ "go.opentelemetry.io/otel/semconv/v1.17.0"
+    var key = "http.status_code"

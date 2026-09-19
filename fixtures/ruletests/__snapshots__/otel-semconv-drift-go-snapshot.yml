@@ -1,0 +1,62 @@
+id: otel-semconv-drift-go
+snapshots:
+  ? |
+    package main
+    import "go.opentelemetry.io/otel/attribute"
+    var _ = attribute.String("http.method", "GET")
+  : labels:
+    - source: '"http.method"'
+      style: primary
+      start: 82
+      end: 95
+    - source: '"go.opentelemetry.io/otel/attribute"'
+      style: secondary
+      start: 20
+      end: 56
+    - source: |
+        package main
+        import "go.opentelemetry.io/otel/attribute"
+        var _ = attribute.String("http.method", "GET")
+      style: secondary
+      start: 0
+      end: 104
+  ? |
+    package main
+    import "go.opentelemetry.io/otel/attribute"
+    var _ = attribute.String("http.target", "/checkout?x=1")
+  : labels:
+    - source: '"http.target"'
+      style: primary
+      start: 82
+      end: 95
+    - source: '"go.opentelemetry.io/otel/attribute"'
+      style: secondary
+      start: 20
+      end: 56
+    - source: |
+        package main
+        import "go.opentelemetry.io/otel/attribute"
+        var _ = attribute.String("http.target", "/checkout?x=1")
+      style: secondary
+      start: 0
+      end: 114
+  ? |
+    package main
+    import _ "go.opentelemetry.io/otel/semconv/v1.17.0"
+    var key = "http.status_code"
+  : labels:
+    - source: '"http.status_code"'
+      style: primary
+      start: 75
+      end: 93
+    - source: _ "go.opentelemetry.io/otel/semconv/v1.17.0"
+      style: secondary
+      start: 20
+      end: 64
+    - source: |
+        package main
+        import _ "go.opentelemetry.io/otel/semconv/v1.17.0"
+        var key = "http.status_code"
+      style: secondary
+      start: 0
+      end: 94

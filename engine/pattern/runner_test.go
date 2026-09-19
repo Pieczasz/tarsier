@@ -651,3 +651,50 @@ class M {
 		t.Fatal("want cardinality extras from Java const labels")
 	}
 }
+
+func TestScanSortsMergedExtras(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	src := []byte(`package shop;
+class M {
+  private static final String[] A = { "user_id" };
+  private static final String[] B = { "email" };
+  void f(){
+    Counter.build().labelNames(A).register();
+    Counter.build().labelNames(B).register();
+  }
+}
+`)
+	if err := os.WriteFile(filepath.Join(dir, "M.java"), src, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	r := &Runner{Bin: fakeAstGrep(t, "", "", minVersion, 0)}
+	got, err := r.Scan(context.Background(), dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) < 2 {
+		t.Fatalf("want >=2 extras for sort, got %d", len(got))
+	}
+	for i := 1; i < len(got); i++ {
+		a, b := got[i-1], got[i]
+		if a.Location.File > b.Location.File {
+			t.Fatalf("unsorted by file: %q > %q", a.Location.File, b.Location.File)
+		}
+		if a.Location.File == b.Location.File && a.Location.Line > b.Location.Line {
+			t.Fatalf("unsorted by line: %d > %d", a.Location.Line, b.Location.Line)
+		}
+	}
+}
+
+func TestDecodeEmptyDirUsesRoot(t *testing.T) {
+	t.Parallel()
+	got, err := decode(strings.NewReader(cannedStream), "/scan-root", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) == 0 {
+		t.Fatal("want findings")
+	}
+}

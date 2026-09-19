@@ -53,7 +53,7 @@ func NewRootCommand() *cobra.Command {
 	f.String("log-level", "info", "log level: debug, info, warn, error")
 	f.String("output", formatText, "output format: text, json, html")
 
-	root.AddCommand(newVersionCommand(), newScanCommand(), newCheckCardinalityCommand())
+	root.AddCommand(newVersionCommand(), newScanCommand(), newCheckCommand(), newCheckCardinalityCommand())
 	return root
 }
 
