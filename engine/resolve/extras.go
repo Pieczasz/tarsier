@@ -63,10 +63,9 @@ func visitCardinalityPath(walkRoot, rootAbs, path string, d fs.DirEntry, err err
 		return nil, true, err
 	}
 	// Untrusted PR trees may plant symlinks that escape the checkout.
+	// WalkDir does not follow links; Type is ModeSymlink and IsDir is false
+	// even when the target is a directory, so one skip covers both shapes.
 	if d.Type()&fs.ModeSymlink != 0 {
-		if d.IsDir() {
-			return nil, true, filepath.SkipDir
-		}
 		return nil, true, nil
 	}
 	if d.IsDir() {
