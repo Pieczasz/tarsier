@@ -119,6 +119,62 @@ func TestRender(t *testing.T) {
 	}
 }
 
+type errWriter struct{}
+
+func (errWriter) Write([]byte) (int, error) { return 0, errors.New("write boom") }
+
+func TestRenderTextWriteErrors(t *testing.T) {
+	t.Parallel()
+	findings := []finding.Finding{{
+		Severity: "warning",
+		Location: finding.Location{File: "a.go", Line: 1},
+		Message:  "m",
+		Note:     "note line",
+	}}
+	if err := render(errWriter{}, findings, "text", "."); err == nil {
+		t.Fatal("want write error on finding line")
+	}
+	// Fail on note line: first Fprintf succeeds once, second fails.
+	w := &failAfter{n: 1}
+	if err := render(w, findings, "text", "."); err == nil {
+		t.Fatal("want write error on note line")
+	}
+}
+
+type failAfter struct {
+	n, i int
+}
+
+func (f *failAfter) Write(p []byte) (int, error) {
+	f.i++
+	if f.i > f.n {
+		return 0, errors.New("write boom")
+	}
+	return len(p), nil
+}
+
+func TestNormalizeEngineEmpty(t *testing.T) {
+	t.Parallel()
+	got, err := normalizeEngine("")
+	if err != nil || got != enginePattern {
+		t.Fatalf("got %q err=%v", got, err)
+	}
+}
+
+func TestEnsurePatternRulesSkipsGoEngine(t *testing.T) {
+	t.Parallel()
+	cfg := ""
+	cleanup, err := ensurePatternRules(engineGo, &cfg)
+	if err != nil || cleanup != nil || cfg != "" {
+		t.Fatalf("go engine must skip materialize: cfg=%q cleanup=%v err=%v", cfg, cleanup != nil, err)
+	}
+	cfg = "already.yml"
+	cleanup, err = ensurePatternRules(enginePattern, &cfg)
+	if err != nil || cleanup != nil || cfg != "already.yml" {
+		t.Fatalf("preset rules must skip: cfg=%q cleanup=%v err=%v", cfg, cleanup != nil, err)
+	}
+}
+
 func TestSourcePath(t *testing.T) {
 	t.Parallel()
 

@@ -19,14 +19,11 @@ const label = "user_id"
 var LABELS = []string{"session_id", "status"}
 `)
 	f := Analyze("x.go", src)
-	if f.PackageOf("kafkago") != "github.com/segmentio/kafka-go" {
-		t.Fatalf("alias: got %q", f.PackageOf("kafkago"))
+	if f.Imports["kafkago"] != "github.com/segmentio/kafka-go" {
+		t.Fatalf("alias: got %q", f.Imports["kafkago"])
 	}
-	if f.PackageOf("attribute") != "go.opentelemetry.io/otel/attribute" {
-		t.Fatalf("attribute import: got %q", f.PackageOf("attribute"))
-	}
-	if !f.HasImport("otel/attribute") {
-		t.Fatal("HasImport missed attribute")
+	if f.Imports["attribute"] != "go.opentelemetry.io/otel/attribute" {
+		t.Fatalf("attribute import: got %q", f.Imports["attribute"])
 	}
 	if got := f.Strings["label"]; len(got) != 1 || got[0].Value != "user_id" {
 		t.Fatalf("const label: %+v", got)
@@ -51,7 +48,7 @@ public class Metrics {
 }
 `)
 	f := Analyze("Metrics.java", src)
-	if !f.HasImport("prometheus") {
+	if !strings.Contains(f.Imports["Counter"], "prometheus") {
 		t.Fatalf("imports: %+v", f.Imports)
 	}
 	lits := f.Strings["LABELS"]
@@ -75,7 +72,7 @@ def record_failure(exc: Exception, status: str, request) -> None:
 	if f.Params["exc"] != "Exception" {
 		t.Fatalf("params: %+v", f.Params)
 	}
-	if f.PackageOf("Counter") == "" {
+	if f.Imports["Counter"] == "" {
 		t.Fatalf("imports: %+v", f.Imports)
 	}
 }
@@ -87,11 +84,11 @@ import kafka from 'kafkajs';
 const LABELS = ['user_id', 'status'];
 `)
 	f := Analyze("m.ts", src)
-	if !f.HasImport("@opentelemetry/api") {
+	if f.Imports["api"] != "@opentelemetry/api" {
 		t.Fatalf("imports: %+v", f.Imports)
 	}
-	if f.PackageOf("kafka") != "kafkajs" {
-		t.Fatalf("kafka: %q", f.PackageOf("kafka"))
+	if f.Imports["kafka"] != "kafkajs" {
+		t.Fatalf("kafka: %q", f.Imports["kafka"])
 	}
 	if got := f.Strings["LABELS"]; len(got) != 2 || got[0].Value != "user_id" {
 		t.Fatalf("LABELS: %+v", got)
@@ -186,8 +183,8 @@ var y = []int{1}
 	if _, ok := f.Imports["_"]; ok {
 		t.Fatal("blank import should be skipped")
 	}
-	if f.PackageOf("semconv") != "go.opentelemetry.io/otel/semconv/v1.24.0" {
-		t.Fatalf("semconv: %q", f.PackageOf("semconv"))
+	if f.Imports["semconv"] != "go.opentelemetry.io/otel/semconv/v1.24.0" {
+		t.Fatalf("semconv: %q", f.Imports["semconv"])
 	}
 	if defaultImportName("go.opentelemetry.io/otel/semconv/v1.24.0") != "semconv" {
 		t.Fatal(defaultImportName("go.opentelemetry.io/otel/semconv/v1.24.0"))
@@ -205,10 +202,10 @@ def f(exc: BaseException, other: ValueError) -> None:
 LABELS = ["user_id"]
 `)
 	f := Analyze("m.py", src)
-	if f.PackageOf("pc") != "prometheus_client" {
-		t.Fatalf("pc: %q imports=%v", f.PackageOf("pc"), f.Imports)
+	if f.Imports["pc"] != "prometheus_client" {
+		t.Fatalf("pc: %q imports=%v", f.Imports["pc"], f.Imports)
 	}
-	if f.PackageOf("metrics") == "" || f.PackageOf("os") != "os" {
+	if f.Imports["metrics"] == "" || f.Imports["os"] != "os" {
 		t.Fatalf("imports: %+v", f.Imports)
 	}
 	if f.Params["exc"] != "BaseException" {
@@ -219,12 +216,8 @@ LABELS = ["user_id"]
 	}
 }
 
-func TestNilFileHelpers(t *testing.T) {
+func TestLangOf(t *testing.T) {
 	t.Parallel()
-	var f *File
-	if f.PackageOf("x") != "" || f.HasImport("x") {
-		t.Fatal("nil file")
-	}
 	if LangOf("a.rs") != "" || LangOf("a.tsx") != "typescript" || LangOf("a.py") != "python" {
 		t.Fatal(LangOf("a.tsx"), LangOf("a.py"))
 	}
@@ -312,12 +305,8 @@ def record_failure(exc: Exception) -> None:
 	}
 }
 
-func TestHasImportEmptyAndBoundedJavaLit(t *testing.T) {
+func TestBoundedJavaLitNoFinding(t *testing.T) {
 	t.Parallel()
-	f := Analyze("x.go", []byte("package p\n"))
-	if f.HasImport("anything") {
-		t.Fatal("empty imports")
-	}
 	dir := t.TempDir()
 	src := []byte(`package p;
 class M {
@@ -405,10 +394,10 @@ from pkg import *
 from pkg import Counter, 
 import pkg.sub as alias
 `))
-	if f.PackageOf("*") != "" {
+	if _, ok := f.Imports["*"]; ok {
 		t.Fatal("star import should not bind")
 	}
-	if f.PackageOf("alias") != "pkg.sub" {
+	if f.Imports["alias"] != "pkg.sub" {
 		t.Fatalf("%+v", f.Imports)
 	}
 }
@@ -464,10 +453,10 @@ class M {
 func TestPythonImportDottedAndSpaced(t *testing.T) {
 	t.Parallel()
 	f := Analyze("m.py", []byte("import pkg.sub\nfrom pkg import   Counter\n"))
-	if f.PackageOf("sub") != "pkg.sub" {
+	if f.Imports["sub"] != "pkg.sub" {
 		t.Fatalf("dotted import name: %+v", f.Imports)
 	}
-	if f.PackageOf("Counter") != "pkg.Counter" {
+	if f.Imports["Counter"] != "pkg.Counter" {
 		t.Fatalf("spaced from-import: %+v", f.Imports)
 	}
 }
@@ -500,7 +489,7 @@ func TestTSSideEffectImport(t *testing.T) {
 	f := Analyze("m.ts", []byte(`import '@opentelemetry/auto-instrumentations-node';
 export const x = 'user_id';
 `))
-	if !f.HasImport("auto-instrumentations-node") {
+	if f.Imports["auto-instrumentations-node"] != "@opentelemetry/auto-instrumentations-node" {
 		t.Fatalf("%+v", f.Imports)
 	}
 }
@@ -539,7 +528,7 @@ from prometheus_client import Counter as C, *
 from x import *
 `)
 	f := Analyze("m.py", src)
-	if f.PackageOf("C") != "prometheus_client.Counter" {
+	if f.Imports["C"] != "prometheus_client.Counter" {
 		t.Fatalf("%+v", f.Imports)
 	}
 }
@@ -643,5 +632,74 @@ func TestVisitCardinalityPathWalkError(t *testing.T) {
 	_, skip, err := visitCardinalityPath("/tmp", "/tmp", "/tmp/x", nil, errors.New("walk boom"))
 	if !skip || err == nil {
 		t.Fatalf("want skip+err, got skip=%v err=%v", skip, err)
+	}
+}
+
+func TestJavaUnclosedMultilineAndBadEscape(t *testing.T) {
+	t.Parallel()
+	f := Analyze("M.java", []byte("class M {\n  private static final String[] LABELS = {\n    \"user_id\"\n"))
+	if len(f.Strings["LABELS"]) != 0 {
+		t.Fatalf("unclosed multiline: %+v", f.Strings)
+	}
+	f = Analyze("M.java", []byte("class M {\n  private static final String[] LABELS = { \"\\x\" };\n}\n"))
+	if len(f.Strings["LABELS"]) != 1 || f.Strings["LABELS"][0].Value != `\x` {
+		t.Fatalf("bad escape fallback: %+v", f.Strings["LABELS"])
+	}
+}
+
+func TestCardinalityExtrasJavaWithoutLabelNames(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	src := []byte(`package p;
+class M {
+  private static final String[] LABELS = { "user_id" };
+}
+`)
+	if err := write(dir, "M.java", src); err != nil {
+		t.Fatal(err)
+	}
+	got, err := CardinalityExtras(dir)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("no labelNames use: %v %v", got, err)
+	}
+}
+
+func TestCardinalityExtrasSymlinkDir(t *testing.T) {
+	t.Parallel()
+	outside := t.TempDir()
+	leak := []byte(`package p;
+class Leak {
+  private static final String[] LABELS = { "user_id" };
+  void f(){ x.labelNames(LABELS); }
+}
+`)
+	if err := os.WriteFile(filepath.Join(outside, "Leak.java"), leak, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	link := filepath.Join(dir, "escaped")
+	if err := os.Symlink(outside, link); err != nil {
+		t.Skipf("symlink not available: %v", err)
+	}
+	got, err := CardinalityExtras(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("dir symlink escape leaked: %+v", got)
+	}
+}
+
+func TestAnalyzeGoMultiNameSingleValue(t *testing.T) {
+	t.Parallel()
+	// CallExpr is one Values entry for two names; stringLits returns nil.
+	src := []byte(`package p
+func pair() (string, string) { return "a", "b" }
+var a, b = pair()
+var x = unknown
+`)
+	f := Analyze("x.go", src)
+	if len(f.Strings["a"]) != 0 || len(f.Strings["x"]) != 0 {
+		t.Fatalf("non-literal assign: %+v", f.Strings)
 	}
 }

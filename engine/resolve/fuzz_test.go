@@ -28,8 +28,7 @@ func FuzzAnalyzeAnyLang(f *testing.F) {
 		if file.Imports == nil || file.Strings == nil || file.Params == nil {
 			t.Fatal("maps must be non-nil")
 		}
-		_ = file.HasImport("otel")
-		_ = file.PackageOf("x")
+		_ = len(file.Imports)
 		for name, lits := range file.Strings {
 			if name == "" {
 				t.Fatal("empty string key")

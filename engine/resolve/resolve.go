@@ -74,27 +74,6 @@ func Analyze(path string, src []byte) *File {
 	return f
 }
 
-// PackageOf returns the import path for a local name, or "" if unknown.
-func (f *File) PackageOf(name string) string {
-	if f == nil {
-		return ""
-	}
-	return f.Imports[name]
-}
-
-// HasImport reports whether any import path contains substr.
-func (f *File) HasImport(substr string) bool {
-	if f == nil {
-		return false
-	}
-	for _, p := range f.Imports {
-		if strings.Contains(p, substr) {
-			return true
-		}
-	}
-	return false
-}
-
 // UnboundedLabel mirrors ruleutils/unbounded-label.yml.
 func UnboundedLabel(s string) bool {
 	s = strings.Trim(s, `"'`)
@@ -134,10 +113,8 @@ func analyzeGo(f *File, src []byte) { //nolint:gocyclo // file-level Go parser w
 			continue
 		}
 		for _, spec := range gen.Specs {
-			vs, ok := spec.(*ast.ValueSpec)
-			if !ok {
-				continue
-			}
+			// CONST/VAR GenDecl specs are always *ast.ValueSpec.
+			vs := spec.(*ast.ValueSpec)
 			for i, name := range vs.Names {
 				if name == nil || name.Name == "_" {
 					continue
@@ -202,7 +179,7 @@ func analyzeTS(f *File, src string) {
 			name = m[2]
 		}
 		if name == "" {
-			// named-only import: use basename as a weak key for HasImport
+			// named-only import: use basename as a weak key for Imports
 			base := filepath.Base(path)
 			f.Imports[base] = path
 			continue

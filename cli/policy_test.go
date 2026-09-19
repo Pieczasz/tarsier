@@ -77,6 +77,34 @@ func TestPolicyBlockingCountIgnoresAdvisory(t *testing.T) {
 	}
 }
 
+func TestLoadPolicyErrors(t *testing.T) {
+	t.Parallel()
+	if _, err := LoadPolicy(filepath.Join(t.TempDir(), "missing.yaml")); err == nil {
+		t.Fatal("want read error")
+	}
+	bad := filepath.Join(t.TempDir(), "bad.yaml")
+	if err := os.WriteFile(bad, []byte("version: [\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadPolicy(bad); err == nil {
+		t.Fatal("want decode error")
+	}
+	ver := filepath.Join(t.TempDir(), "ver.yaml")
+	if err := os.WriteFile(ver, []byte("version: 2\nblock:\n  - unbounded-metric-labels\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadPolicy(ver); err == nil || !strings.Contains(err.Error(), "want 1") {
+		t.Fatalf("want version error, got %v", err)
+	}
+}
+
+func TestPolicyViolationErrorMessage(t *testing.T) {
+	t.Parallel()
+	if got := (policyViolationError{count: 2}).Error(); got != "2 findings match opted-in blocking classes" {
+		t.Fatalf("%q", got)
+	}
+}
+
 func TestLoadPolicyTrimsBlockEntries(t *testing.T) {
 	t.Parallel()
 
