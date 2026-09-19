@@ -73,6 +73,7 @@ func (p *Policy) validate() error {
 		return policyError{msg: "policy.block is empty; list at least one opt-in class or omit --policy"}
 	}
 	seen := map[string]bool{}
+	normalized := make([]string, 0, len(p.Block))
 	for _, entry := range p.Block {
 		entry = strings.TrimSpace(entry)
 		if entry == "" {
@@ -92,7 +93,9 @@ func (p *Policy) validate() error {
 				"policy.block %q is not an opt-in blocking class; allowed: %s",
 				entry, allowedBlockClasses())}
 		}
+		normalized = append(normalized, entry)
 	}
+	p.Block = normalized // enforce uses the same strings validate accepted
 	return nil
 }
 

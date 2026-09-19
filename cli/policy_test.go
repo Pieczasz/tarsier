@@ -77,6 +77,23 @@ func TestPolicyBlockingCountIgnoresAdvisory(t *testing.T) {
 	}
 }
 
+func TestLoadPolicyTrimsBlockEntries(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "policy.yaml")
+	body := "version: 1\nblock:\n  - \"  unbounded-metric-labels  \"\n"
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p, err := LoadPolicy(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !p.blockedRules()["metrics/high-cardinality-label"] {
+		t.Fatalf("padded block entry must still expand; Block=%v blocked=%v", p.Block, p.blockedRules())
+	}
+}
+
 func TestCheckCommandExitsOnBlockedClass(t *testing.T) {
 	t.Parallel()
 

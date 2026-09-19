@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,8 +26,7 @@ const (
 	engineAll     = "all"
 )
 
-func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engines and lifecycle
-
+func newScanCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scan [path]",
 		Short: "Scan a repository for observability gaps",
@@ -47,26 +47,17 @@ func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engi
 				root = args[0]
 			}
 
-			engine, _ := cmd.Flags().GetString("engine")
-			switch engine {
-			case "", enginePattern, engineGo, engineAll:
-			default:
-				return fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
+			engine, err := normalizeEngine(flagString(cmd, "engine"))
+			if err != nil {
+				return err
 			}
-			if engine == "" {
-				engine = enginePattern
+			config := flagString(cmd, "rules")
+			cleanup, err := ensurePatternRules(engine, &config)
+			if err != nil {
+				return err
 			}
-
-			config, _ := cmd.Flags().GetString("rules")
-			if config == "" && engine != engineGo {
-				dir, err := os.MkdirTemp("", "tarsier-rules-")
-				if err != nil {
-					return err
-				}
-				defer func() { _ = os.RemoveAll(dir) }()
-				if config, err = rules.Materialize(dir); err != nil {
-					return err
-				}
+			if cleanup != nil {
+				defer cleanup()
 			}
 			failOn, _ := cmd.Flags().GetString("fail-on")
 			threshold, err := failOnRank(failOn)
@@ -76,22 +67,9 @@ func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engi
 
 			timeout, _ := cmd.Flags().GetDuration("timeout")
 			started := time.Now()
-			var findings []finding.Finding
-
-			if engine == enginePattern || engine == engineAll {
-				runner := &pattern.Runner{Config: config, Timeout: timeout}
-				got, err := runner.Scan(cmd.Context(), root)
-				if err != nil {
-					return err
-				}
-				findings = append(findings, got...)
-			}
-			if engine == engineGo || engine == engineAll {
-				got, err := (&enggolang.Runner{}).Scan(root)
-				if err != nil {
-					return err
-				}
-				findings = append(findings, got...)
+			findings, err := runEngines(cmd.Context(), root, engine, config, timeout)
+			if err != nil {
+				return err
 			}
 
 			baseline, _ := cmd.Flags().GetString("baseline")
@@ -125,6 +103,61 @@ func newScanCommand() *cobra.Command { //nolint:gocyclo // cobra RunE wires engi
 	cmd.Flags().String("baseline-write", "", "write current findings as a baseline file")
 	cmd.Flags().String("fail-on", failOnNone, "exit 1 if a non-suppressed finding is at or above this severity: none, info, warning, error")
 	return cmd
+}
+
+func normalizeEngine(engine string) (string, error) {
+	switch engine {
+	case "", enginePattern, engineGo, engineAll:
+	default:
+		return "", fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
+	}
+	if engine == "" {
+		return enginePattern, nil
+	}
+	return engine, nil
+}
+
+func flagString(cmd *cobra.Command, name string) string {
+	v, _ := cmd.Flags().GetString(name)
+	return v
+}
+
+// ensurePatternRules materializes the embedded pack when pattern tier runs
+// without --rules. cleanup removes the temp dir; nil means nothing to do.
+func ensurePatternRules(engine string, config *string) (cleanup func(), err error) {
+	if *config != "" || engine == engineGo {
+		return nil, nil
+	}
+	dir, err := os.MkdirTemp("", "tarsier-rules-")
+	if err != nil {
+		return nil, err
+	}
+	path, err := rules.Materialize(dir)
+	if err != nil {
+		_ = os.RemoveAll(dir)
+		return nil, err
+	}
+	*config = path
+	return func() { _ = os.RemoveAll(dir) }, nil
+}
+
+func runEngines(ctx context.Context, root, engine, config string, timeout time.Duration) ([]finding.Finding, error) {
+	var findings []finding.Finding
+	if engine == enginePattern || engine == engineAll {
+		got, err := (&pattern.Runner{Config: config, Timeout: timeout}).Scan(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+		findings = append(findings, got...)
+	}
+	if engine == engineGo || engine == engineAll {
+		got, err := (&enggolang.Runner{}).Scan(root)
+		if err != nil {
+			return nil, err
+		}
+		findings = append(findings, got...)
+	}
+	return findings, nil
 }
 
 // sourcePath resolves a finding's scan-relative path against the scan root.

@@ -1,17 +1,10 @@
 package cli
 
 import (
-	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
-
-	enggolang "github.com/Pieczasz/tarsier/engine/golang"
-	"github.com/Pieczasz/tarsier/engine/pattern"
-	"github.com/Pieczasz/tarsier/finding"
-	"github.com/Pieczasz/tarsier/rules"
 )
 
 func newCheckCommand() *cobra.Command {
@@ -52,41 +45,29 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 {
 		root = args[0]
 	}
-	policyPath, _ := cmd.Flags().GetString("policy")
-	pol, err := LoadPolicy(policyPath)
+	pol, err := LoadPolicy(flagString(cmd, "policy"))
 	if err != nil {
 		return err
 	}
-
-	engine, _ := cmd.Flags().GetString("engine")
-	switch engine {
-	case "", enginePattern, engineGo, engineAll:
-	default:
-		return fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
+	engine, err := normalizeEngine(flagString(cmd, "engine"))
+	if err != nil {
+		return err
 	}
-	if engine == "" {
-		engine = enginePattern
+	config := flagString(cmd, "rules")
+	cleanup, err := ensurePatternRules(engine, &config)
+	if err != nil {
+		return err
 	}
-
-	config, _ := cmd.Flags().GetString("rules")
-	if config == "" && engine != engineGo {
-		dir, err := os.MkdirTemp("", "tarsier-rules-")
-		if err != nil {
-			return err
-		}
-		defer func() { _ = os.RemoveAll(dir) }()
-		if config, err = rules.Materialize(dir); err != nil {
-			return err
-		}
+	if cleanup != nil {
+		defer cleanup()
 	}
 
 	timeout, _ := cmd.Flags().GetDuration("timeout")
 	started := time.Now()
-	findings, err := checkScan(cmd, root, engine, config, timeout)
+	findings, err := runEngines(cmd.Context(), root, engine, config, timeout)
 	if err != nil {
 		return err
 	}
-
 	baseline, _ := cmd.Flags().GetString("baseline")
 	baselineWrite, _ := cmd.Flags().GetString("baseline-write")
 	findings, suppressed, known, err := applyLifecycle(root, findings, baseline, baselineWrite)
@@ -109,23 +90,4 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		return policyViolationError{count: n}
 	}
 	return nil
-}
-
-func checkScan(cmd *cobra.Command, root, engine, config string, timeout time.Duration) ([]finding.Finding, error) {
-	var findings []finding.Finding
-	if engine == enginePattern || engine == engineAll {
-		got, err := (&pattern.Runner{Config: config, Timeout: timeout}).Scan(cmd.Context(), root)
-		if err != nil {
-			return nil, err
-		}
-		findings = append(findings, got...)
-	}
-	if engine == engineGo || engine == engineAll {
-		got, err := (&enggolang.Runner{}).Scan(root)
-		if err != nil {
-			return nil, err
-		}
-		findings = append(findings, got...)
-	}
-	return findings, nil
 }
