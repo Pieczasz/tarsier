@@ -113,8 +113,10 @@ func analyzeGo(f *File, src []byte) { //nolint:gocyclo // file-level Go parser w
 			continue
 		}
 		for _, spec := range gen.Specs {
-			// CONST/VAR GenDecl specs are always *ast.ValueSpec.
-			vs := spec.(*ast.ValueSpec)
+			vs, ok := spec.(*ast.ValueSpec)
+			if !ok {
+				continue // forcetypeassert: CONST/VAR specs are ValueSpec; keep the check
+			}
 			for i, name := range vs.Names {
 				if name == nil || name.Name == "_" {
 					continue
