@@ -1,0 +1,68 @@
+id: otel-semconv-drift-ts
+snapshots:
+  ? |
+    import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+    const attrs = { 'http.status_code': 500 };
+  : labels:
+    - source: '''http.status_code'''
+      style: primary
+      start: 89
+      end: 107
+    - source: '''@opentelemetry/semantic-conventions'''
+      style: secondary
+      start: 34
+      end: 71
+    - source: import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+      style: secondary
+      start: 0
+      end: 72
+    - source: |
+        import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+        const attrs = { 'http.status_code': 500 };
+      style: secondary
+      start: 0
+      end: 116
+  ? |
+    import { Span } from '@opentelemetry/api';
+    span.setAttribute("http.target", "/checkout?x=1");
+  : labels:
+    - source: '"http.target"'
+      style: primary
+      start: 61
+      end: 74
+    - source: '''@opentelemetry/api'''
+      style: secondary
+      start: 21
+      end: 41
+    - source: import { Span } from '@opentelemetry/api';
+      style: secondary
+      start: 0
+      end: 42
+    - source: |
+        import { Span } from '@opentelemetry/api';
+        span.setAttribute("http.target", "/checkout?x=1");
+      style: secondary
+      start: 0
+      end: 94
+  ? |
+    import { Span } from '@opentelemetry/api';
+    span.setAttribute('http.method', 'GET');
+  : labels:
+    - source: '''http.method'''
+      style: primary
+      start: 61
+      end: 74
+    - source: '''@opentelemetry/api'''
+      style: secondary
+      start: 21
+      end: 41
+    - source: import { Span } from '@opentelemetry/api';
+      style: secondary
+      start: 0
+      end: 42
+    - source: |
+        import { Span } from '@opentelemetry/api';
+        span.setAttribute('http.method', 'GET');
+      style: secondary
+      start: 0
+      end: 84

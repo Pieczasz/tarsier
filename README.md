@@ -40,6 +40,18 @@ CI gate without a policy file:
 tarsier scan --fail-on warning .
 ```
 
+Policy gate (opt-in blocking classes only — TAR-47):
+
+```bash
+# observability-policy.yaml
+# version: 1
+# block:
+#   - unbounded-metric-labels
+tarsier check --policy observability-policy.yaml .
+```
+
+Exit codes for `check`: `0` when no opted-in blocking findings; `1` when a blocked class matches (or flags/policy are invalid). Layer 3/4 rules cannot be listed under `block` (rejected at parse time). `--baseline` is honoured.
+
 Adopt on an existing repo without failing the first build:
 
 ```bash
@@ -68,6 +80,7 @@ Example workflow: [`examples/github-actions/scan.yml`](examples/github-actions/s
 | `httpctx/outbound-call-without-context` | Go | `http.Get`/`Post`/`Head`/`PostForm` |
 | `otel/sdk-missing-resource-attrs` | Go, TS | Provider/SDK without `service.name` |
 | `otel/sdk-missing-shutdown` | Go, TS | Provider without Shutdown/forceFlush (medium) |
+| `otel/semconv-drift` | Go, TS | Deprecated HTTP attribute names (advisory) |
 | `errors/swallowed-on-critical-path` | Go, Java | `_ = err` / empty `catch` (medium) |
 | `traces/error-path-not-recorded-on-span` | Go | return err after `.Start(` without RecordError/SetStatus (medium) |
 | `logs/missing-trace-correlation` | Go, TS | slog/pino alongside OTel without a bridge (medium) |
