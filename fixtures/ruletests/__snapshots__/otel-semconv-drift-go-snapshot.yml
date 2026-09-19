@@ -42,23 +42,21 @@ snapshots:
       end: 114
   ? |
     package main
-    import semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-    var _ = semconv.AttributeHTTPMethod // keep file importing semconv
+    import _ "go.opentelemetry.io/otel/semconv/v1.17.0"
     var key = "http.status_code"
   : labels:
     - source: '"http.status_code"'
       style: primary
-      start: 148
-      end: 166
-    - source: semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+      start: 75
+      end: 93
+    - source: _ "go.opentelemetry.io/otel/semconv/v1.17.0"
       style: secondary
       start: 20
-      end: 70
+      end: 64
     - source: |
         package main
-        import semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-        var _ = semconv.AttributeHTTPMethod // keep file importing semconv
+        import _ "go.opentelemetry.io/otel/semconv/v1.17.0"
         var key = "http.status_code"
       style: secondary
       start: 0
-      end: 167
+      end: 94

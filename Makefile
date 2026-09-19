@@ -46,7 +46,9 @@ vuln:
 	$(run_tool) $(GOVULNCHK) ./...
 
 dead:
-	@out="$$($(run_tool) $(DEADCODE) -test ./...)"; \
+	@out="$$($(run_tool) $(DEADCODE) -test ./... 2>&1)"; \
+	status=$$?; \
+	if [ $$status -ne 0 ]; then echo "$$out"; exit $$status; fi; \
 	if [ -n "$$out" ]; then echo "$$out"; exit 1; fi
 
 modern:
