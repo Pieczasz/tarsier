@@ -10,6 +10,26 @@ valid:
     package main
     import (
       "fmt"
+      "log/slog"
+    )
+    func f(id string) {
+      // sprintf in attrs is structured — not the message argument
+      slog.Info("order failed", "order_id", fmt.Sprintf("%s", id))
+    }
+  - |
+    package main
+    import (
+      "context"
+      "fmt"
+      "log/slog"
+    )
+    func f(ctx context.Context, id string) {
+      slog.ErrorContext(ctx, "boom", "id", fmt.Sprintf("%s", id))
+    }
+  - |
+    package main
+    import (
+      "fmt"
       "log"
     )
     func f(id string) {
@@ -36,4 +56,13 @@ invalid:
     )
     func f(ctx context.Context, id string) {
       slog.ErrorContext(ctx, fmt.Sprintf("boom %s", id))
+    }
+  - |
+    package main
+    import (
+      "fmt"
+      "log/slog"
+    )
+    func f(id string) {
+      slog.Warn(fmt.Sprintf("x %s", id), "k", 1)
     }

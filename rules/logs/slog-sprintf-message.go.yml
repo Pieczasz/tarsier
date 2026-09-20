@@ -17,23 +17,40 @@ note: |
   Fix: slog.Info("order failed", "order_id", id, "err", err) — not
   slog.Info(fmt.Sprintf("order %s failed: %v", id, err)).
 
-  Precision (TAR-77): medium until corpus FP measured. Legitimate uses of
-  sprintf for a stable message template with no dynamic fields are rare;
-  demote further or tighten if FP rate is bad. Do not promote to high without
-  evidence (docs/PRECISION.md).
+  Precision (TAR-77): medium until corpus FP measured. Only the message
+  argument is matched (nth child 1 for Info/…, nth child 2 for *Context);
+  fmt.Sprintf inside structured attrs is notwant. Logger method receivers
+  (l.Info) and slog.Default().Info are out of scope. Do not promote to high
+  without evidence (docs/PRECISION.md).
 
 rule:
   kind: call_expression
   all:
-    - has:
-        field: function
-        regex: '^slog\.(Info|Error|Warn|Debug|InfoContext|ErrorContext|WarnContext|DebugContext)$'
-    - has:
-        stopBy: end
-        kind: call_expression
-        has:
-          field: function
-          regex: '^fmt\.Sprintf$'
+    - any:
+        - all:
+            - has:
+                field: function
+                regex: '^slog\.(Info|Error|Warn|Debug)$'
+            - has:
+                field: arguments
+                has:
+                  nthChild: 1
+                  kind: call_expression
+                  has:
+                    field: function
+                    regex: '^fmt\.Sprintf$'
+        - all:
+            - has:
+                field: function
+                regex: '^slog\.(InfoContext|ErrorContext|WarnContext|DebugContext)$'
+            - has:
+                field: arguments
+                has:
+                  nthChild: 2
+                  kind: call_expression
+                  has:
+                    field: function
+                    regex: '^fmt\.Sprintf$'
     - inside:
         stopBy: end
         kind: source_file
