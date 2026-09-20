@@ -6,7 +6,7 @@ metadata:
   rule: otel/semconv-drift
   requires: attributes
   expectation_layer: "2"
-  confidence: high
+  confidence: medium
   spec_ref: otel/semconv-http-migration
 
 message: "Deprecated OTel HTTP attribute name; TraceQL/PromQL joins break across SDK versions."
@@ -24,8 +24,9 @@ note: |
     http.user_agent   -> user_agent.original
 
   Flagged when go.opentelemetry.io/otel/attribute (or semconv) is imported
-  and a deprecated key appears as a string literal. Advisory severity until
-  corpus precision is measured.
+  and a deprecated key appears as a string literal. Confidence is medium
+  (TAR-77): string-literal matches can FP on non-attribute uses; promote to
+  high only after corpus precision evidence (see docs/PRECISION.md).
 
 rule:
   any:

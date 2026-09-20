@@ -1,0 +1,142 @@
+id: logs-slog-sprintf-message-go
+snapshots:
+  ? |
+    package main
+    import (
+      "context"
+      "fmt"
+      "log/slog"
+    )
+    func f(ctx context.Context, id string) {
+      slog.ErrorContext(ctx, fmt.Sprintf("boom %s", id))
+    }
+  : labels:
+    - source: slog.ErrorContext(ctx, fmt.Sprintf("boom %s", id))
+      style: primary
+      start: 100
+      end: 150
+    - source: slog.ErrorContext
+      style: secondary
+      start: 100
+      end: 117
+    - source: fmt.Sprintf
+      style: secondary
+      start: 123
+      end: 134
+    - source: fmt.Sprintf("boom %s", id)
+      style: secondary
+      start: 123
+      end: 149
+    - source: fmt.Sprintf("boom %s", id)
+      style: secondary
+      start: 123
+      end: 149
+    - source: '"log/slog"'
+      style: secondary
+      start: 44
+      end: 54
+    - source: |
+        package main
+        import (
+          "context"
+          "fmt"
+          "log/slog"
+        )
+        func f(ctx context.Context, id string) {
+          slog.ErrorContext(ctx, fmt.Sprintf("boom %s", id))
+        }
+      style: secondary
+      start: 0
+      end: 153
+  ? |
+    package main
+    import (
+      "fmt"
+      "log/slog"
+    )
+    func f(id string) {
+      slog.Warn(fmt.Sprintf("x %s", id), "k", 1)
+    }
+  : labels:
+    - source: slog.Warn(fmt.Sprintf("x %s", id), "k", 1)
+      style: primary
+      start: 67
+      end: 109
+    - source: slog.Warn
+      style: secondary
+      start: 67
+      end: 76
+    - source: fmt.Sprintf
+      style: secondary
+      start: 77
+      end: 88
+    - source: fmt.Sprintf("x %s", id)
+      style: secondary
+      start: 77
+      end: 100
+    - source: fmt.Sprintf("x %s", id)
+      style: secondary
+      start: 77
+      end: 100
+    - source: '"log/slog"'
+      style: secondary
+      start: 32
+      end: 42
+    - source: |
+        package main
+        import (
+          "fmt"
+          "log/slog"
+        )
+        func f(id string) {
+          slog.Warn(fmt.Sprintf("x %s", id), "k", 1)
+        }
+      style: secondary
+      start: 0
+      end: 112
+  ? |
+    package main
+    import (
+      "fmt"
+      "log/slog"
+    )
+    func f(id string, err error) {
+      slog.Info(fmt.Sprintf("order %s failed: %v", id, err))
+    }
+  : labels:
+    - source: 'slog.Info(fmt.Sprintf("order %s failed: %v", id, err))'
+      style: primary
+      start: 78
+      end: 132
+    - source: slog.Info
+      style: secondary
+      start: 78
+      end: 87
+    - source: fmt.Sprintf
+      style: secondary
+      start: 88
+      end: 99
+    - source: 'fmt.Sprintf("order %s failed: %v", id, err)'
+      style: secondary
+      start: 88
+      end: 131
+    - source: 'fmt.Sprintf("order %s failed: %v", id, err)'
+      style: secondary
+      start: 88
+      end: 131
+    - source: '"log/slog"'
+      style: secondary
+      start: 32
+      end: 42
+    - source: |
+        package main
+        import (
+          "fmt"
+          "log/slog"
+        )
+        func f(id string, err error) {
+          slog.Info(fmt.Sprintf("order %s failed: %v", id, err))
+        }
+      style: secondary
+      start: 0
+      end: 135
