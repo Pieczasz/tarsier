@@ -1,0 +1,43 @@
+id: logs-slog-sprintf-message-go
+language: go
+severity: warning
+
+metadata:
+  rule: logs/slog-sprintf-message
+  requires: log_correlation
+  expectation_layer: "2"
+  confidence: medium
+  spec_ref: instrumentation-score/LOG-001
+
+message: "slog message is built with fmt.Sprintf; prefer structured attrs."
+note: |
+  slog.Info/Error/Warn/Debug with fmt.Sprintf as the message argument collapses
+  fields into an unstructured string and fights log<->trace correlation.
+
+  Fix: slog.Info("order failed", "order_id", id, "err", err) — not
+  slog.Info(fmt.Sprintf("order %s failed: %v", id, err)).
+
+  Precision (TAR-77): medium until corpus FP measured. Legitimate uses of
+  sprintf for a stable message template with no dynamic fields are rare;
+  demote further or tighten if FP rate is bad. Do not promote to high without
+  evidence (docs/PRECISION.md).
+
+rule:
+  kind: call_expression
+  all:
+    - has:
+        field: function
+        regex: '^slog\.(Info|Error|Warn|Debug|InfoContext|ErrorContext|WarnContext|DebugContext)$'
+    - has:
+        stopBy: end
+        kind: call_expression
+        has:
+          field: function
+          regex: '^fmt\.Sprintf$'
+    - inside:
+        stopBy: end
+        kind: source_file
+        has:
+          stopBy: end
+          kind: import_spec
+          regex: '"log/slog"'

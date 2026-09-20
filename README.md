@@ -80,10 +80,13 @@ Example workflow: [`examples/github-actions/scan.yml`](examples/github-actions/s
 | `httpctx/outbound-call-without-context` | Go | `http.Get`/`Post`/`Head`/`PostForm` |
 | `otel/sdk-missing-resource-attrs` | Go, TS | Provider/SDK without `service.name` |
 | `otel/sdk-missing-shutdown` | Go, TS | Provider without Shutdown/forceFlush (medium) |
-| `otel/semconv-drift` | Go, TS | Deprecated HTTP attribute names (advisory) |
+| `otel/semconv-drift` | Go, TS | Deprecated HTTP attribute names (medium; TAR-77 precision gate) |
 | `errors/swallowed-on-critical-path` | Go, Java | `_ = err` / empty `catch` (medium) |
 | `traces/error-path-not-recorded-on-span` | Go | return err after `.Start(` without RecordError/SetStatus (medium) |
 | `logs/missing-trace-correlation` | Go, TS | slog/pino alongside OTel without a bridge (medium) |
+| `logs/slog-sprintf-message` | Go | `slog.*(fmt.Sprintf(...))` — prefer structured attrs (medium; TAR-77) |
+
+Precision process for high-confidence rules: [`docs/PRECISION.md`](docs/PRECISION.md).
 
 ## Demo fixture
 

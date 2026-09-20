@@ -1,0 +1,39 @@
+id: logs-slog-sprintf-message-go
+valid:
+  - |
+    package main
+    import "log/slog"
+    func f(id string, err error) {
+      slog.Info("order failed", "order_id", id, "err", err)
+    }
+  - |
+    package main
+    import (
+      "fmt"
+      "log"
+    )
+    func f(id string) {
+      // not slog — unstructured-logging may still fire when slog is imported
+      log.Printf("order %s", id)
+      _ = fmt.Sprintf("x")
+    }
+invalid:
+  - |
+    package main
+    import (
+      "fmt"
+      "log/slog"
+    )
+    func f(id string, err error) {
+      slog.Info(fmt.Sprintf("order %s failed: %v", id, err))
+    }
+  - |
+    package main
+    import (
+      "context"
+      "fmt"
+      "log/slog"
+    )
+    func f(ctx context.Context, id string) {
+      slog.ErrorContext(ctx, fmt.Sprintf("boom %s", id))
+    }
