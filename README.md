@@ -40,7 +40,7 @@ CI gate without a policy file:
 tarsier scan --fail-on warning .
 ```
 
-Policy gate (opt-in blocking classes only — TAR-47):
+Policy gate (opt-in blocking classes only - TAR-47):
 
 ```bash
 # observability-policy.yaml
@@ -84,7 +84,7 @@ Example workflow: [`examples/github-actions/scan.yml`](examples/github-actions/s
 | `errors/swallowed-on-critical-path` | Go, Java | `_ = err` / empty `catch` (medium) |
 | `traces/error-path-not-recorded-on-span` | Go | return err after `.Start(` without RecordError/SetStatus (medium) |
 | `logs/missing-trace-correlation` | Go, TS | slog/pino alongside OTel without a bridge (medium) |
-| `logs/slog-sprintf-message` | Go | `slog.*(fmt.Sprintf(...))` — prefer structured attrs (medium; TAR-77) |
+| `logs/slog-sprintf-message` | Go | `slog.*(fmt.Sprintf(...))` - prefer structured attrs (medium; TAR-77) |
 
 Precision process for high-confidence rules: [`docs/PRECISION.md`](docs/PRECISION.md).
 

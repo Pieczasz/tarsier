@@ -48,7 +48,7 @@ precision.
 | `recommender/metrics.py` `print` | `logs/unstructured-logging` | Rule **cut** |
 
 Flipped by TAR-20 (symbol resolver): `worker/Metrics.java` label-via-variable
-(`LABELS` const array → `labelNames(LABELS)`), and `recommender/metrics.py`
+(`LABELS` const array -> `labelNames(LABELS)`), and `recommender/metrics.py`
 `str(exc)` when `exc` is annotated `Exception`. OTel metrics attribute keys in
 Go/TS/Python stay behind import gates.
 

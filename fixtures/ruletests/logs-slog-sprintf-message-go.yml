@@ -13,7 +13,7 @@ valid:
       "log/slog"
     )
     func f(id string) {
-      // sprintf in attrs is structured — not the message argument
+      // sprintf in attrs is structured - not the message argument
       slog.Info("order failed", "order_id", fmt.Sprintf("%s", id))
     }
   - |
@@ -33,7 +33,7 @@ valid:
       "log"
     )
     func f(id string) {
-      // not slog — unstructured-logging may still fire when slog is imported
+      // not slog - unstructured-logging may still fire when slog is imported
       log.Printf("order %s", id)
       _ = fmt.Sprintf("x")
     }

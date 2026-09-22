@@ -6,7 +6,7 @@ MODERNIZE := golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@
 GOVULNCHK := golang.org/x/vuln/cmd/govulncheck@v1.7.0
 
 # `go run pkg@version` builds the tool under that module's go line (x/tools
-# v0.50 → 1.26). Pin to go.mod's go line so analysis can load packages that
+# v0.50 -> 1.26). Pin to go.mod's go line so analysis can load packages that
 # need a newer Go, and so GOTOOLCHAIN=local on an older host go still selects
 # the module toolchain (GOVERSION collapses to the bootstrap under local).
 GO_LINE := $(shell sed -n 's/^go //p' go.mod | head -1)

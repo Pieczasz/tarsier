@@ -14,7 +14,7 @@ note: |
   slog.Info/Error/Warn/Debug with fmt.Sprintf as the message argument collapses
   fields into an unstructured string and fights log<->trace correlation.
 
-  Fix: slog.Info("order failed", "order_id", id, "err", err) — not
+  Fix: slog.Info("order failed", "order_id", id, "err", err) - not
   slog.Info(fmt.Sprintf("order %s failed: %v", id, err)).
 
   Precision (TAR-77): medium until corpus FP measured. Only the message

@@ -13,28 +13,28 @@ make build
 
 ## Script
 
-1. **Positive control** — show planted defects light up:
+1. **Positive control** - show planted defects light up:
 
    ```bash
    ./bin/tarsier scan fixtures/_badshop
    ```
 
-   Point at 2–3 **high**-confidence hits (cardinality label, kafka produce without inject, unstructured log). Skip narrating medium findings unless asked.
+   Point at 2-3 **high**-confidence hits (cardinality label, kafka produce without inject, unstructured log). Skip narrating medium findings unless asked.
 
-2. **HTML report** — open in a browser:
+2. **HTML report** - open in a browser:
 
    ```bash
    ./bin/tarsier --output html scan fixtures/_badshop > /tmp/tarsier-badshop.html
    open /tmp/tarsier-badshop.html   # or xdg-open
    ```
 
-3. **CI gate** — medium never fails the build; warnings/errors can:
+3. **CI gate** - medium never fails the build; warnings/errors can:
 
    ```bash
    ./bin/tarsier scan --fail-on warning fixtures/_badshop; echo "exit=$?"
    ```
 
-4. **Baseline** — adopt without failing day one:
+4. **Baseline** - adopt without failing day one:
 
    ```bash
    ./bin/tarsier scan fixtures/_badshop --baseline-write /tmp/base.json

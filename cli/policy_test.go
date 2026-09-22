@@ -156,7 +156,7 @@ func TestCheckCommandAllowsAdvisoryOnly(t *testing.T) {
 
 	dir := t.TempDir()
 	policy := filepath.Join(dir, "policy.yaml")
-	// missing-propagation only — cardinality findings must not fail the build
+	// missing-propagation only - cardinality findings must not fail the build
 	if err := os.WriteFile(policy, []byte("version: 1\nblock:\n  - missing-propagation\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}

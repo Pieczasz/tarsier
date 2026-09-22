@@ -23,7 +23,7 @@ When adding a provider family (e.g. slog bridge, TS OTel):
 ## This pass (TAR-77)
 
 * Documented this gate.
-* Demoted `otel/semconv-drift` (Go + TS) from `high` → `medium` (notes already said precision unmeasured).
+* Demoted `otel/semconv-drift` (Go + TS) from `high` -> `medium` (notes already said precision unmeasured).
 * Added Go **slog sprintf-message** provider (`logs/slog-sprintf-message`) at **medium** with ruletests + FP note.
 
 No phones-home / learning telemetry in the public CLI.
