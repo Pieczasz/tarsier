@@ -26,16 +26,6 @@ const (
 	engineAll     = "all"
 )
 
-type scanOpts struct {
-	engine        string
-	rules         string
-	timeout       time.Duration
-	baseline      string
-	baselineWrite string
-	failOn        string
-	format        string
-}
-
 func newScanCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scan [path]",
@@ -51,7 +41,60 @@ func newScanCommand() *cobra.Command {
 			"(go/analysis deep tier), or all. Medium-confidence findings " +
 			"never trip --fail-on.",
 		Args: cobra.MaximumNArgs(1),
-		RunE: runScan,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			root := "."
+			if len(args) == 1 {
+				root = args[0]
+			}
+
+			engine, err := normalizeEngine(flagString(cmd, "engine"))
+			if err != nil {
+				return err
+			}
+			config := flagString(cmd, "rules")
+			cleanup, err := ensurePatternRules(engine, &config)
+			if err != nil {
+				return err
+			}
+			if cleanup != nil {
+				defer cleanup()
+			}
+			failOn, _ := cmd.Flags().GetString("fail-on")
+			threshold, err := failOnRank(failOn)
+			if err != nil {
+				return err
+			}
+
+			timeout, _ := cmd.Flags().GetDuration("timeout")
+			started := time.Now()
+			findings, err := runEngines(cmd.Context(), root, engine, config, timeout)
+			if err != nil {
+				return err
+			}
+
+			baseline, _ := cmd.Flags().GetString("baseline")
+			baselineWrite, _ := cmd.Flags().GetString("baseline-write")
+			findings, suppressed, known, err := applyLifecycle(root, findings, baseline, baselineWrite)
+			if err != nil {
+				return err
+			}
+			slog.Info("scan complete",
+				"root", root,
+				"engine", engine,
+				"findings", len(findings),
+				"suppressed", suppressed,
+				"known", known,
+				"duration_ms", time.Since(started).Milliseconds())
+
+			format, _ := cmd.Flags().GetString("output")
+			if err := render(cmd.OutOrStdout(), findings, format, root); err != nil {
+				return err
+			}
+			if n := blockingCount(findings, threshold); n > 0 {
+				return failOnThresholdError{threshold: failOn, count: n}
+			}
+			return nil
+		},
 	}
 	cmd.Flags().String("rules", "", "ast-grep project config (default: the embedded rule pack)")
 	cmd.Flags().String("engine", enginePattern, "analyzer engine: pattern, go or all")
@@ -62,85 +105,27 @@ func newScanCommand() *cobra.Command {
 	return cmd
 }
 
-func runScan(cmd *cobra.Command, args []string) error {
-	root := "."
-	if len(args) == 1 {
-		root = args[0]
-	}
-	opts, err := readScanOpts(cmd)
-	if err != nil {
-		return err
-	}
-	threshold, err := failOnRank(opts.failOn)
-	if err != nil {
-		return err
-	}
-
-	cleanup, err := ensurePatternRules(&opts)
-	if err != nil {
-		return err
-	}
-	if cleanup != nil {
-		defer cleanup()
-	}
-
-	started := time.Now()
-	findings, err := runEngines(cmd.Context(), root, &opts)
-	if err != nil {
-		return err
-	}
-	findings, suppressed, known, err := applyLifecycle(root, findings, opts.baseline, opts.baselineWrite)
-	if err != nil {
-		return err
-	}
-	slog.Info("scan complete",
-		"root", root,
-		"engine", opts.engine,
-		"findings", len(findings),
-		"suppressed", suppressed,
-		"known", known,
-		"duration_ms", time.Since(started).Milliseconds())
-
-	if err := render(cmd.OutOrStdout(), findings, opts.format, root); err != nil {
-		return err
-	}
-	if n := blockingCount(findings, threshold); n > 0 {
-		return failOnThresholdError{threshold: opts.failOn, count: n}
-	}
-	return nil
-}
-
-func readScanOpts(cmd *cobra.Command) (scanOpts, error) {
-	engine, _ := cmd.Flags().GetString("engine")
+func normalizeEngine(engine string) (string, error) {
 	switch engine {
 	case "", enginePattern, engineGo, engineAll:
 	default:
-		return scanOpts{}, fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
+		return "", fmt.Errorf("invalid --engine %q: want pattern, go or all", engine)
 	}
 	if engine == "" {
-		engine = enginePattern
+		return enginePattern, nil
 	}
-	rulesPath, _ := cmd.Flags().GetString("rules")
-	timeout, _ := cmd.Flags().GetDuration("timeout")
-	baseline, _ := cmd.Flags().GetString("baseline")
-	baselineWrite, _ := cmd.Flags().GetString("baseline-write")
-	failOn, _ := cmd.Flags().GetString("fail-on")
-	format, _ := cmd.Flags().GetString("output")
-	return scanOpts{
-		engine:        engine,
-		rules:         rulesPath,
-		timeout:       timeout,
-		baseline:      baseline,
-		baselineWrite: baselineWrite,
-		failOn:        failOn,
-		format:        format,
-	}, nil
+	return engine, nil
 }
 
-// ensurePatternRules materializes the embedded rule pack when pattern tier
-// runs without --rules. cleanup removes the temp dir; nil means nothing to do.
-func ensurePatternRules(opts *scanOpts) (cleanup func(), err error) {
-	if opts.rules != "" || opts.engine == engineGo {
+func flagString(cmd *cobra.Command, name string) string {
+	v, _ := cmd.Flags().GetString(name)
+	return v
+}
+
+// ensurePatternRules materializes the embedded pack when pattern tier runs
+// without --rules. cleanup removes the temp dir; nil means nothing to do.
+func ensurePatternRules(engine string, config *string) (cleanup func(), err error) {
+	if *config != "" || engine == engineGo {
 		return nil, nil
 	}
 	dir, err := os.MkdirTemp("", "tarsier-rules-")
@@ -152,20 +137,20 @@ func ensurePatternRules(opts *scanOpts) (cleanup func(), err error) {
 		_ = os.RemoveAll(dir)
 		return nil, err
 	}
-	opts.rules = path
+	*config = path
 	return func() { _ = os.RemoveAll(dir) }, nil
 }
 
-func runEngines(ctx context.Context, root string, opts *scanOpts) ([]finding.Finding, error) {
+func runEngines(ctx context.Context, root, engine, config string, timeout time.Duration) ([]finding.Finding, error) {
 	var findings []finding.Finding
-	if opts.engine == enginePattern || opts.engine == engineAll {
-		got, err := (&pattern.Runner{Config: opts.rules, Timeout: opts.timeout}).Scan(ctx, root)
+	if engine == enginePattern || engine == engineAll {
+		got, err := (&pattern.Runner{Config: config, Timeout: timeout}).Scan(ctx, root)
 		if err != nil {
 			return nil, err
 		}
 		findings = append(findings, got...)
 	}
-	if opts.engine == engineGo || opts.engine == engineAll {
+	if engine == engineGo || engine == engineAll {
 		got, err := (&enggolang.Runner{}).Scan(root)
 		if err != nil {
 			return nil, err
