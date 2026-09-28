@@ -7,7 +7,9 @@ import (
 	"slices"
 )
 
-const baselineVersion = 1
+// baselineVersion 2: fingerprints are length-prefixed (see finding.Fingerprint).
+// Version 1 files must be regenerated with --baseline-write.
+const baselineVersion = 2
 
 // Baseline is the versioned fingerprint set recorded at adoption. A later
 // scan reports only findings whose fingerprint is absent here.

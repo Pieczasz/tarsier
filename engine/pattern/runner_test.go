@@ -367,6 +367,9 @@ func TestVersionAtLeast(t *testing.T) {
 		{name: "missing patch component", got: "0.46", want: "0.45.0", ok: true},
 		{name: "older patch", got: "0.45.1", want: "0.45.2", ok: false},
 		{name: "newer patch", got: "0.45.3", want: "0.45.2", ok: true},
+		{name: "pre-release suffix still compares numeric", got: "0.45.1-rc.1", want: "0.45.0", ok: true},
+		{name: "pre-release older patch", got: "0.45.0-rc.1", want: "0.45.1", ok: false},
+		{name: "v prefix", got: "v0.45.0", want: "0.45.0", ok: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
